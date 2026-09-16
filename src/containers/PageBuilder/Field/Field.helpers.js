@@ -202,7 +202,14 @@ export const exposeYoutubeProps = data => {
     youtubeVideoId.match(/^[a-zA-Z0-9_-]+$/i);
   const cleanYoutubeVideoId = hasYoutubeVideoId ? encodeURIComponent(youtubeVideoId) : null;
 
-  const hasAspectRatio = isString(aspectRatio) && aspectRatio.match(/^(\d+)\/(\d+)+$/);
+  // `(\d+)+` is a quantifier inside a quantifier, which is the exponential
+  // shape rather than the merely slow one: on "1/" followed by ~30 digits and
+  // a non-digit, the engine explores every way of splitting those digits into
+  // groups and the tab stops responding. The repetition was never meant — one
+  // `\d+` on each side of the slash is the whole grammar — and a length bound
+  // keeps it honest.
+  const hasAspectRatio =
+    isString(aspectRatio) && aspectRatio.length <= 16 && /^\d+\/\d+$/.test(aspectRatio);
   const aspectRatioMaybe = hasAspectRatio ? { aspectRatio } : {};
 
   return cleanYoutubeVideoId

@@ -118,7 +118,7 @@ module.exports = async (req, res) => {
       // Integration API may not be available (403).
       // Log so the operator can mark it delivered manually.
       console.error(
-        `onfleet-webhook: Could not auto-transition ${transactionId} to delivered.`,
+        'onfleet-webhook: Could not auto-transition %s to delivered.', transactionId,
         `Mark it manually in Sharetribe Console. Error: ${integrationErr.message}`
       );
       return res.status(200).json({

@@ -9,6 +9,8 @@ const {
   serialize,
   fetchCommission,
 } = require('../api-util/sdk');
+const { getNextPickupDate } = require('../api-util/pickupSchedule');
+const { generateOrderGroupId } = require('../api-util/orderGroups');
 
 const { Money } = sharetribeSdk.types;
 
@@ -85,7 +87,17 @@ module.exports = (req, res) => {
       // OnFleet task creation, and the transaction breakdown UI.
       const extraProtectedData = {};
       if (orderData?.deliveryMethod) extraProtectedData.deliveryMethod = orderData.deliveryMethod;
-      if (orderData?.orderGroupId) extraProtectedData.orderGroupId = orderData.orderGroupId;
+      // Every order belongs to a group, including a single-item checkout that
+      // never went through the cart — the consolidated order views read this,
+      // and a one-item order has to render through the same structure as a
+      // ten-item one. The cart sends its own shared id; anything else gets a
+      // group of one generated here.
+      extraProtectedData.orderGroupId = orderData?.orderGroupId || generateOrderGroupId();
+      // Freeze the delivery date onto the order. Reading it back from the
+      // pickup schedule later would return the *next* delivery date, not the
+      // one this order was placed for.
+      const deliveryDate = getNextPickupDate();
+      if (deliveryDate) extraProtectedData.deliveryDate = deliveryDate;
       // Standalone delivery linkage: the delivery transaction marks itself with
       // isDeliveryOrder; each item transaction stores the delivery transaction's
       // id so reconciliation can find the delivery order for the group.

@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
+import * as StoreReview from 'expo-store-review';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { readAsStringAsync } from 'expo-file-system';
@@ -360,6 +361,21 @@ export default function App() {
           }
         } catch {
           // Haptics may not be available (e.g. simulator)
+        }
+        break;
+      }
+
+      // --- App Store Review Prompt ---
+      case 'requestReview': {
+        // OS rating dialog (SKStoreReviewController / Play In-App Review).
+        // The OS decides whether it actually appears and never tells us, so
+        // this is fire-and-forget. Web side throttles when it asks.
+        try {
+          if (await StoreReview.hasAction()) {
+            await StoreReview.requestReview();
+          }
+        } catch {
+          // Not available (e.g. simulator, unsigned build)
         }
         break;
       }

@@ -145,7 +145,11 @@ const processCartCheckoutPayloadCreator = async (
     !!DELIVERY_LISTING_ID && hasShippingItems && routeShippingFeeCents > 0 && !orderGroupId;
   // All transactions from this checkout share one order-group id so they can be
   // reconciled (and added to) together.
-  const effectiveGroupId = orderGroupId || (canStandaloneDelivery ? generateOrderGroupId() : null);
+  // Every checkout gets a group id, not just the ones with a standalone
+  // delivery transaction. The consolidated order views key off this, and a
+  // pickup-only or single-item cart has to render through the same structure
+  // as everything else — one code path, not two.
+  const effectiveGroupId = orderGroupId || generateOrderGroupId();
 
   let shippingFeeAssigned = false;
   // Charge the platform fee once per cart, but split it proportionally across

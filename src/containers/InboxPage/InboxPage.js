@@ -40,6 +40,7 @@ import {
   H2,
   Avatar,
   NamedLink,
+  NamedRedirect,
   NotificationBadge,
   Page,
   PaginationLinks,
@@ -224,6 +225,16 @@ export const InboxItem = props => {
 const LEGACY_TABS = ['orders', 'sales'];
 const REDESIGNED_TABS = ['new-orders', 'completed', 'messages', 'orders', 'sales'];
 
+// Tabs that used to list transactions one row per line item, and the
+// consolidated page that now owns that job. Old links and bookmarks keep
+// working; they just land on the new view.
+const ORDER_TABS_REPLACED_BY = {
+  orders: 'OrdersPage',
+  'new-orders': 'OrdersPage',
+  completed: 'OrdersPage',
+  sales: 'VendorOrdersPage',
+};
+
 /**
  * The InboxPage component.
  */
@@ -252,6 +263,16 @@ export const InboxPageComponent = props => {
 
   if (!validTab) {
     return <NotFoundPage staticContext={props.staticContext} />;
+  }
+
+  // The order-listing tabs have been replaced by the consolidated order views:
+  // one row per checkout for buyers, one packing list per customer for vendors.
+  // The old tabs listed one row per line item, which is the thing the
+  // consolidated order work exists to get rid of. Messages stays here — it is
+  // a conversation list, not an order list.
+  const consolidatedTarget = ORDER_TABS_REPLACED_BY[tab];
+  if (consolidatedTarget) {
+    return <NamedRedirect name={consolidatedTarget} />;
   }
 
   const { customer: isCustomerUserType, provider: isProviderUserType } = getCurrentUserTypeRoles(

@@ -182,6 +182,18 @@ const TopbarMobileMenu = props => {
             </NamedLink>
           </li>
           {manageListingsLinkMaybe}
+          <li className={classNames(css.navigationLink, currentPageClass('OrdersPage'))}>
+            <NamedLink name="OrdersPage">
+              <FormattedMessage id="TopbarMobileMenu.ordersLink" />
+            </NamedLink>
+          </li>
+          {showCreateListingsLink ? (
+            <li className={classNames(css.navigationLink, currentPageClass('VendorOrdersPage'))}>
+              <NamedLink name="VendorOrdersPage">
+                <FormattedMessage id="TopbarMobileMenu.vendorOrdersLink" />
+              </NamedLink>
+            </li>
+          ) : null}
           {appSettings.featureFlags.vendorFollow ? (
             <li className={classNames(css.navigationLink, currentPageClass('FollowedVendorsPage'))}>
               <NamedLink name="FollowedVendorsPage">

@@ -1,0 +1,299 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 24px 96px 24px;
+
+  @media (--viewportMedium) {
+    padding: 40px 24px 120px 24px;
+  }
+}
+
+.listHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.title {
+  margin: 0;
+}
+
+.messagesLink {
+  font-size: 14px;
+  color: var(--colorGrey600);
+  flex-shrink: 0;
+}
+
+.summaryLine {
+  margin: 0 0 20px 0;
+  color: var(--colorGrey600);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 64px 0;
+}
+
+.error,
+.empty {
+  color: var(--colorGrey600);
+  padding: 24px 0;
+}
+
+.error {
+  color: var(--colorFail);
+}
+
+/* ================ Delivery date tabs ================ */
+
+.dateTabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin-bottom: 20px;
+  padding-bottom: 4px;
+}
+
+.dateTab {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 16px;
+  background-color: var(--colorWhite);
+  color: var(--colorGrey700);
+  font-size: 14px;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--colorGrey300);
+  }
+}
+
+.dateTabActive {
+  background-color: var(--marketplaceColor);
+  border-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+}
+
+/* ================ Harvest roll-up ================ */
+
+.rollUp {
+  border: 1px solid var(--colorGrey100);
+  border-radius: 8px;
+  margin-bottom: 24px;
+  background-color: var(--colorGrey50);
+}
+
+.rollUpHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.rollUpTitle {
+  margin: 0;
+}
+
+.rollUpList {
+  list-style: none;
+  margin: 0;
+  padding: 0 16px 12px 16px;
+}
+
+.rollUpRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.rollUpQuantity {
+  min-width: 32px;
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey900);
+}
+
+.rollUpName {
+  flex: 1;
+  color: var(--colorGrey900);
+}
+
+.rollUpOrders {
+  font-size: 13px;
+  color: var(--colorGrey500);
+}
+
+/* ================ Suborder ================ */
+
+.suborder {
+  border: 1px solid var(--colorGrey100);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.suborderHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--colorGrey100);
+}
+
+.customerName {
+  display: block;
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey900);
+}
+
+.suborderMeta {
+  display: block;
+  font-size: 13px;
+  color: var(--colorGrey500);
+}
+
+.itemList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.itemRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--colorGrey50);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.itemImage,
+.itemImagePlaceholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.itemImagePlaceholder {
+  background-color: var(--colorGrey100);
+}
+
+.itemQuantity {
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey900);
+  min-width: 28px;
+}
+
+.itemInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.itemTitle {
+  color: var(--colorGrey900);
+}
+
+.itemMeta {
+  font-size: 13px;
+  color: var(--colorGrey500);
+}
+
+.itemActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.declineButton {
+  color: var(--colorFail);
+}
+
+.suborderActions {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--colorGrey50);
+
+  & > * {
+    flex: 1;
+    min-height: 44px;
+  }
+}
+
+/* ================ Money ================ */
+
+.financials {
+  padding: 12px 16px 16px 16px;
+  background-color: var(--colorGrey50);
+  border-top: 1px solid var(--colorGrey100);
+}
+
+.financialsRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  color: var(--colorGrey700);
+}
+
+.financialsNote {
+  color: var(--colorGrey500);
+  font-size: 14px;
+}
+
+.financialsNet {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--colorGrey100);
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey900);
+}
+
+.financialsExplainer {
+  margin: 8px 0 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--colorGrey500);
+}
+
+/* ================ Status badge ================ */
+
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: var(--fontWeightMedium);
+  white-space: nowrap;
+  background-color: var(--colorGrey100);
+  color: var(--colorGrey700);
+  flex-shrink: 0;
+}
+
+.badge_accepted {
+  background-color: var(--colorSuccessSubtle);
+  color: var(--colorSuccessDark);
+}
+
+.badge_unavailable {
+  background-color: var(--colorFailSubtle);
+  color: var(--colorFailDark);
+}

@@ -7,6 +7,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
+import * as StoreReview from 'expo-store-review';
 import Constants from 'expo-constants';
 
 const SITE_URL = (Constants.expoConfig?.extra as any)?.siteUrl || 'https://www.farmfed.us';
@@ -180,6 +181,15 @@ export default function App() {
         case 'haptic': {
           triggerHaptic(payload?.style);
           return; // fire-and-forget, no respond
+        }
+        case 'requestReview': {
+          // OS rating dialog (SKStoreReviewController / Play In-App Review).
+          // The OS decides whether it actually appears and never tells us, so
+          // this is fire-and-forget.
+          if (await StoreReview.hasAction()) {
+            await StoreReview.requestReview();
+          }
+          return;
         }
         case 'camera': {
           const result = await pickImage(payload?.source);

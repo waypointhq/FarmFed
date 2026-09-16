@@ -1,0 +1,91 @@
+;; FarmFed "notification-carrier" transaction process — SPIKE.
+;;
+;; Purpose: prove that one consolidated email per vendor per order can be sent
+;; by Sharetribe itself, with no external email provider.
+;;
+;; The problem it solves: a notification template is rooted at ONE transaction
+;; and can only iterate that transaction's own line items. A five-item cart is
+;; five transactions, so the stock process emits five vendor emails. There is
+;; no way for a template to reach a sibling transaction.
+;;
+;; The carrier is a transaction whose only job is to be that one transaction.
+;; It is created by the operator after payment succeeds, anchored on one of the
+;; vendor's listings, and carries EVERY item that vendor sold in this order
+;; group as line items. Its template therefore renders the whole packing list
+;; and the whole money breakdown from `tx-line-items`.
+;;
+;; Critically it has NO Stripe actions and NO stock actions:
+;;   - no money moves through it; the real per-item transactions were already
+;;     charged, so line items here are a faithful copy for display only
+;;   - stock stays reserved by the real per-item transactions on their own
+;;     listings, which is what makes this safe where "one transaction per
+;;     vendor" is not
+;;
+;; The vendor accepts once, here, and the server fans that out to the real item
+;; transactions. That also gives §5 of the spec for free: the summary email
+;; fires on a single accept transition, so it cannot be sent per line item.
+{:format :v3,
+ :transitions
+ [;; The carrier is created once the order group is paid for. Sharetribe only
+  ;; allows :actor.role/customer or :actor.role/provider on an initial
+  ;; transition, so it is customer-actored and issued server-side on the
+  ;; buyer's behalf — exactly how the standalone delivery transaction is
+  ;; already created today. Privileged, so the line items are copied from the
+  ;; real transactions server-side rather than trusted from a client.
+  {:name :transition/issue,
+   :actor :actor.role/customer,
+   :privileged? true,
+   :actions
+   [{:name :action/update-protected-data}
+    {:name :action/privileged-set-line-items}],
+   :to :state/awaiting-vendor}
+
+  ;; Vendor resolves the whole suborder in one action.
+  {:name :transition/accept,
+   :actor :actor.role/provider,
+   :from :state/awaiting-vendor,
+   :to :state/accepted}
+
+  ;; Operator accepting on a vendor's behalf — the farm is closed and asked us
+  ;; to accept for them.
+  {:name :transition/operator-accept,
+   :actor :actor.role/operator,
+   :from :state/awaiting-vendor,
+   :to :state/accepted}
+
+  {:name :transition/decline,
+   :actor :actor.role/provider,
+   :from :state/awaiting-vendor,
+   :to :state/declined}
+
+  {:name :transition/operator-decline,
+   :actor :actor.role/operator,
+   :from :state/awaiting-vendor,
+   :to :state/declined}
+
+  ;; Mirrors the item transactions' own auto-decline window so the carrier
+  ;; cannot outlive the orders it describes.
+  {:name :transition/auto-decline,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/awaiting-vendor]}
+     {:fn/period ["P1D"]}]},
+   :from :state/awaiting-vendor,
+   :to :state/declined}],
+
+ :notifications
+ [;; §3.4 — one email per customer order per vendor, listing every item.
+  {:name :notification/carrier-new-order,
+   :on :transition/issue,
+   :to :actor.role/provider,
+   :template :carrier-new-order}
+
+  ;; §3.5 — the money email, once, after the whole suborder is resolved.
+  {:name :notification/carrier-summary,
+   :on :transition/accept,
+   :to :actor.role/provider,
+   :template :carrier-summary}
+  {:name :notification/carrier-summary-operator-accepted,
+   :on :transition/operator-accept,
+   :to :actor.role/provider,
+   :template :carrier-summary}]}

@@ -1,0 +1,1 @@
+{{set-translations (asset "content/email-texts.json")}}{{t "CarrierNewOrder.Subject" "New order from {customerName} — order #{orderId}" customerName=transaction.customer.display-name orderId=transaction.protected-data.shortOrderId}}

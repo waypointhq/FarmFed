@@ -5,6 +5,7 @@ import { formatMoney } from '../../util/currency';
 import { types as sdkTypes } from '../../util/sdkLoader';
 import { calculateCartFee, estimateCartDelivery, fetchPickupSettings, fetchActiveOrderGroup } from '../../util/api';
 import appSettings from '../../config/settings';
+import { requestAppReviewAfterOrder } from '../../util/appReview';
 
 import { NamedLink, PrimaryButton } from '../../components';
 
@@ -177,6 +178,16 @@ const CartCheckoutPageContent = props => {
     if (completedResults) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }, [completedResults]);
+
+  // Ask for an app store review after a successful order. Native app only, and
+  // throttled inside the helper — see util/appReview. Delayed so the dialog
+  // lands on the success screen rather than on top of the spinner.
+  useEffect(() => {
+    const anySucceeded = completedResults?.results?.some(r => r.success);
+    if (!anySucceeded) return undefined;
+    const timer = setTimeout(() => requestAppReviewAfterOrder(), 1500);
+    return () => clearTimeout(timer);
   }, [completedResults]);
 
   // Check if any cart items support delivery/shipping (from listing publicData)
@@ -507,7 +518,11 @@ const CartCheckoutPageContent = props => {
 
   const deliveryAmount = addingToExistingOrder ? 0 : estimatedDelivery || 0;
   const feeAmount = addingToExistingOrder ? 0 : estimatedFee || 0;
-  const showFeeRow = !addingToExistingOrder && estimatedFee != null;
+  // Hide the fee row entirely when there is no buyer-side fee. Under a
+  // provider-side commission the platform's cut comes out of the vendor's
+  // price, so the buyer has nothing to show and a "$0.00" row just raises
+  // questions.
+  const showFeeRow = !addingToExistingOrder && estimatedFee > 0;
   const showDeliveryRow =
     !addingToExistingOrder && hasShippingItems && (estimatingBreakdown || estimatedDelivery != null);
   const showBreakdown =

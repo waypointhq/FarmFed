@@ -88,6 +88,26 @@ const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLin
             </NamedLink>
           </MenuItem>
         ) : null}
+        <MenuItem key="OrdersPage">
+          <NamedLink
+            className={classNames(css.menuLink, currentPageClass('OrdersPage'))}
+            name="OrdersPage"
+          >
+            <span className={css.menuItemBorder} />
+            <FormattedMessage id="TopbarDesktop.ordersLink" />
+          </NamedLink>
+        </MenuItem>
+        {showManageListingsLink ? (
+          <MenuItem key="VendorOrdersPage">
+            <NamedLink
+              className={classNames(css.menuLink, currentPageClass('VendorOrdersPage'))}
+              name="VendorOrdersPage"
+            >
+              <span className={css.menuItemBorder} />
+              <FormattedMessage id="TopbarDesktop.vendorOrdersLink" />
+            </NamedLink>
+          </MenuItem>
+        ) : null}
         {appSettings.featureFlags.vendorFollow ? (
           <MenuItem key="FollowedVendorsPage">
             <NamedLink

@@ -8,6 +8,7 @@ import { propTypes } from '../../util/types';
 import { ensureTransaction } from '../../util/data';
 import { createSlug } from '../../util/urlHelpers';
 import { isTransactionInitiateListingNotFoundError } from '../../util/errors';
+import { requestAppReviewAfterOrder } from '../../util/appReview';
 import {
   getProcess,
   isBookingProcessAlias,
@@ -323,6 +324,10 @@ const handleSubmit = (values, process, props, stripe, submitting, setSubmitting)
       setOrderPageInitialValues(initialValues, routeConfiguration, dispatch);
       onSubmitCallback();
       history.push(orderDetailsPath);
+
+      // Ask for an app store review once the order page is up. Native app
+      // only, and throttled inside the helper — see util/appReview.
+      setTimeout(() => requestAppReviewAfterOrder(), 1500);
     })
     .catch(err => {
       console.error(err);

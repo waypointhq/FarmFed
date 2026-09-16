@@ -445,6 +445,31 @@ export const fetchActiveOrderGroup = () => {
   });
 };
 
+// ====== Consolidated Order Views ====== //
+
+// The customer's orders, one entry per checkout instead of one per line item.
+// Pass `id` to fetch a single order group.
+export const fetchOrderGroups = ({ id, page } = {}) => {
+  const params = new URLSearchParams();
+  if (id) params.set('id', id);
+  if (page) params.set('page', String(page));
+  const query = params.toString();
+  return request(`/api/order-groups${query ? `?${query}` : ''}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+// The logged-in vendor's suborders for a delivery date, plus the per-SKU
+// roll-up of everything they need to pull for that date.
+export const fetchVendorSuborders = ({ date } = {}) => {
+  const query = date ? `?date=${encodeURIComponent(date)}` : '';
+  return request(`/api/vendor-suborders${query}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
 // Link item transactions to a standalone delivery transaction's order group
 // so reconciliation can decide whether the whole order was denied.
 export const linkDeliveryItems = ({ deliveryTransactionId, itemTransactionIds }) => {

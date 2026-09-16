@@ -22,6 +22,8 @@ const EditListingPage = loadable(() => import(/* webpackChunkName: "EditListingP
 const EmailVerificationPage = loadable(() => import(/* webpackChunkName: "EmailVerificationPage" */ '../containers/EmailVerificationPage/EmailVerificationPage'));
 const InboxPage = loadable(() => import(/* webpackChunkName: "InboxPage" */ '../containers/InboxPage/InboxPage'));
 const FollowedVendorsPage = loadable(() => import(/* webpackChunkName: "FollowedVendorsPage" */ '../containers/FollowedVendorsPage/FollowedVendorsPage'));
+const OrdersPage = loadable(() => import(/* webpackChunkName: "OrdersPage" */ '../containers/OrdersPage/OrdersPage'));
+const VendorOrdersPage = loadable(() => import(/* webpackChunkName: "VendorOrdersPage" */ '../containers/VendorOrdersPage/VendorOrdersPage'));
 const MakeOfferPage = loadable(() => import(/* webpackChunkName: "MakeOfferPage" */ '../containers/MakeOfferPage/MakeOfferPage'));
 const LandingPage = loadable(() => import(/* webpackChunkName: "LandingPage" */ '../containers/LandingPage/LandingPage'));
 const ListingPageCoverPhoto = loadable(() => import(/* webpackChunkName: "ListingPageCoverPhoto" */ /* webpackPrefetch: true */ '../containers/ListingPage/ListingPageCoverPhoto'));
@@ -265,7 +267,11 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       name: 'InboxBasePage',
       auth: true,
       authPage: 'LoginPage',
-      component: () => <NamedRedirect name="InboxPage" params={{ tab: 'sales' }} />,
+      // Orders and sales now live on the consolidated order pages, so bare
+      // /inbox lands on messages — the one tab still owned by the inbox and
+      // the only one that is right for every role. (Requires the
+      // inboxRedesign flag, which adds the messages tab.)
+      component: () => <NamedRedirect name="InboxPage" params={{ tab: 'messages' }} />,
     },
     {
       path: '/inbox/:tab',
@@ -281,6 +287,32 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       auth: true,
       authPage: 'LoginPage',
       component: FollowedVendorsPage,
+    },
+    {
+      // Consolidated customer order history: one row per checkout rather than
+      // one per line item.
+      path: '/orders',
+      name: 'OrdersPage',
+      auth: true,
+      authPage: 'LoginPage',
+      component: OrdersPage,
+    },
+    {
+      // One order group: the customer's items grouped under the vendor that
+      // sold them, with the totals for the whole checkout.
+      path: '/orders/:groupId',
+      name: 'OrderGroupPage',
+      auth: true,
+      authPage: 'LoginPage',
+      component: OrdersPage,
+    },
+    {
+      // Vendor packing lists for a delivery date, one per customer order.
+      path: '/vendor-orders',
+      name: 'VendorOrdersPage',
+      auth: true,
+      authPage: 'LoginPage',
+      component: VendorOrdersPage,
     },
     {
       path: '/order/:id',

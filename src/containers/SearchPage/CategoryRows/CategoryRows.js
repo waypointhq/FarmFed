@@ -19,6 +19,50 @@ const SCROLL_EDGE_TOLERANCE = 8;
 // is roughly a quarter of the viewport and on desktop caps out at 300px.
 const CARD_RENDER_SIZES = ['(max-width: 767px) 30vw', '300px'].join(', ');
 
+// ---- Daily category shuffle ----------------------------------------------
+// Category order comes from the hosted config, which is a fixed list, so the
+// categories at the bottom were permanently getting less exposure than the ones
+// at the top — and so were the vendors who sell in them.
+//
+// The order is re-randomised once per day rather than per render or per visit:
+// a row order that moves while you are scrolling it is disorienting, and it has
+// to be identical on the server and in the browser or hydration mismatches.
+// Seeding from the UTC day number gives both, and gives every category a turn
+// near the top over a week.
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+const currentDaySeed = () => Math.floor(Date.now() / MS_PER_DAY);
+
+// mulberry32 — small, fast, and good enough for shuffling a handful of rows.
+const seededRandom = seed => {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+/**
+ * Fisher-Yates with a seeded generator, so the same seed always produces the
+ * same order. Does not mutate the input.
+ *
+ * @param {Array} items
+ * @param {number} seed
+ * @returns {Array} a new array in shuffled order
+ */
+export const shuffleWithSeed = (items, seed) => {
+  const random = seededRandom(seed);
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+};
+
 const IconArrow = ({ direction }) => (
   <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
     <path
@@ -178,6 +222,12 @@ const CategoryRows = props => {
 
   const populatedCategories = categories.filter(c => (listingsByCategory[c.id] || []).length > 0);
 
+  // Re-ordered once per day so no category is permanently stuck at the bottom.
+  // Recomputed on every render, which is safe precisely because the shuffle is
+  // deterministic: the same categories and the same day always produce the same
+  // order, so rows never move under the user mid-scroll.
+  const orderedCategories = shuffleWithSeed(populatedCategories, currentDaySeed());
+
   if (inProgress && populatedCategories.length === 0) {
     return (
       <div className={classNames(css.root, className)}>
@@ -190,7 +240,7 @@ const CategoryRows = props => {
 
   return (
     <div className={classNames(css.root, className)}>
-      {populatedCategories.map(category => (
+      {orderedCategories.map(category => (
         <CategoryRow
           key={category.id}
           category={category}

@@ -219,12 +219,17 @@ router.put('/announcements/active', setAnnouncementActive);
 // OnFleet delivery integration endpoints
 router.post('/create-onfleet-task', createOnfleetTask);
 router.get('/onfleet-webhook', (req, res) => {
-  // OnFleet webhook validation: echo back the check value
+  // OnFleet webhook validation: echo back the check value.
+  //
+  // `res.send(string)` answers with Content-Type text/html, so echoing the
+  // query parameter as-is made this a reflected XSS: `?check=<script>...`
+  // ran in the browser of anyone who followed the link. OnFleet only needs
+  // the bytes back, so the response is text/plain, where markup is inert.
   const check = req.query.check;
-  if (check) {
-    return res.status(200).send(check);
+  if (typeof check === 'string' && check) {
+    return res.status(200).type('text/plain').send(check);
   }
-  return res.status(200).send('ok');
+  return res.status(200).type('text/plain').send('ok');
 });
 router.post('/onfleet-webhook', onfleetWebhook);
 

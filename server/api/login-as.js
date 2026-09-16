@@ -23,12 +23,17 @@ module.exports = (req, res) => {
   const storedState = req.cookies[stateKey];
 
   if (state !== storedState) {
-    res.status(401).send('Invalid state parameter.');
+    res.status(401).type('text/plain').send('Invalid state parameter.');
     return;
   }
 
   if (error) {
-    res.status(401).send(`Failed to authorize as a user, error: ${error}.`);
+    // The error string comes from the query, and `res.send` would answer with
+    // Content-Type text/html, which reflects whatever markup it contains. The
+    // value is echoed for an operator reading the page, so it stays, but as
+    // text/plain where it cannot execute.
+    console.warn('login-as: authorization failed', { error: String(error).slice(0, 200) });
+    res.status(401).type('text/plain').send('Failed to authorize as a user.');
     return;
   }
 

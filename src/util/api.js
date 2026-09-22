@@ -470,6 +470,16 @@ export const fetchVendorSuborders = ({ date } = {}) => {
   });
 };
 
+// Finish a pickup -> delivery upgrade: flip the items to delivery, link them to
+// the delivery transaction that was just paid for, and notify the vendors.
+export const convertOrderToDelivery = ({ orderGroupId, deliveryTransactionId, shippingAddress }) => {
+  return request('/api/convert-order-to-delivery', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderGroupId, deliveryTransactionId, shippingAddress }),
+  });
+};
+
 // Link item transactions to a standalone delivery transaction's order group
 // so reconciliation can decide whether the whole order was denied.
 export const linkDeliveryItems = ({ deliveryTransactionId, itemTransactionIds }) => {

@@ -52,6 +52,14 @@ module.exports = async (req, res) => {
       return res.status(200).json({ orderGroup: toOrderGroup(id, txs, findIncluded) });
     }
 
+    // Most recent address this buyer had something delivered to, so an upgrade
+    // to delivery doesn't make them type it again. There is no address on the
+    // user profile to read instead.
+    const lastShippingAddress =
+      transactions
+        .map(tx => tx.attributes?.protectedData?.shippingAddress)
+        .find(address => address && address.line1) || null;
+
     const orderGroups = Array.from(grouped.entries())
       .map(([groupId, txs]) => toOrderGroup(groupId, txs, findIncluded))
       // A group whose only transaction is the standalone delivery charge is an
@@ -61,6 +69,7 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({
       orderGroups,
+      lastShippingAddress,
       meta: response.data.meta || null,
     });
   } catch (e) {

@@ -1792,5 +1792,19 @@
   "OrdersPage.selfPickup": "Self pickup",
   "OrdersPage.readyForPickup": "Ready {date}",
   "OrdersPage.pickupNotice": "This is a self-pickup order \u2014 nothing is being delivered. Message each vendor below to arrange a pickup time and place.",
-  "OrdersPage.messageVendor": "Message {vendorName}"
+  "OrdersPage.messageVendor": "Message {vendorName}",
+  "OrdersPage.upgradeTitle": "Prefer delivery?",
+  "OrdersPage.upgradeBlurb": "Switch this order to delivery and we'll bring it to you on the same day.",
+  "OrdersPage.upgradeCta": "Switch to delivery",
+  "OrdersPage.upgradeAddressTitle": "Where should we deliver it?",
+  "OrdersPage.upgradeNeedsCard": "Add a payment method first and we'll charge the delivery fee to it.",
+  "OrdersPage.upgradeAddCard": "Add a card",
+  "OrdersPage.upgradeFeeNote": "The delivery fee is charged to the card on file. Your vendors will be told the order is now being delivered.",
+  "OrdersPage.upgradeConfirm": "Pay delivery fee and switch",
+  "OrdersPage.upgradeFailed": "We couldn't switch this order to delivery. Nothing has been charged twice \u2014 please try again or get in touch.",
+  "OrdersPage.cancel": "Cancel",
+  "OrdersPage.addressLine1": "Street address",
+  "OrdersPage.city": "City",
+  "OrdersPage.state": "State",
+  "OrdersPage.postalCode": "ZIP code"
 }

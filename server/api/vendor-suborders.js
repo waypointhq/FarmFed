@@ -9,6 +9,7 @@ const {
   isDeliveryTransaction,
   relId,
   currencyOf,
+  deliveryMethodOf,
   SUBORDER_UNAVAILABLE,
 } = require('../api-util/orderGroups');
 
@@ -117,7 +118,9 @@ module.exports = async (req, res) => {
           customerId,
           customerName: customer?.attributes?.profile?.displayName || 'Customer',
           deliveryDate: dateOf(txs[0]),
-          deliveryMethod: txs[0].attributes?.protectedData?.deliveryMethod || null,
+          // Reads metadata first, so a pickup order the buyer upgraded to
+          // delivery shows up on the packing list as delivery.
+          deliveryMethod: deliveryMethodOf(txs[0]),
           createdAt: txs.map(tx => tx.attributes.createdAt).sort()[0],
           items,
           status: rollUpStatus(items),

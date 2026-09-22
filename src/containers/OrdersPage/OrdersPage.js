@@ -1,10 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 import { array, bool, func, object } from 'prop-types';
 
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
+import { fetchCurrentUser } from '../../ducks/user.duck';
+import { fetchPickupSettings } from '../../util/api';
+import { useConfiguration } from '../../context/configurationContext';
 import {
   formatCents,
   formatDeliveryDate,
@@ -13,8 +16,16 @@ import {
   SUBORDER_ACCEPTED,
   SUBORDER_UNAVAILABLE,
 } from '../../util/orderGroups';
-import { loadOrderGroups, loadOrderGroup } from './OrdersPage.duck';
-import { Page, LayoutSingleColumn, NamedLink, H3, IconSpinner } from '../../components';
+import { loadOrderGroups, loadOrderGroup, upgradeToDelivery } from './OrdersPage.duck';
+import {
+  Page,
+  LayoutSingleColumn,
+  NamedLink,
+  H3,
+  IconSpinner,
+  PrimaryButton,
+  InlineTextButton,
+} from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
@@ -124,7 +135,120 @@ const TotalsBlock = ({ totals, intl }) => {
   );
 };
 
-const OrderGroupDetail = ({ orderGroup, intl }) => {
+const ADDRESS_FIELDS = [
+  { key: 'addressLine1', labelId: 'OrdersPage.addressLine1', required: true },
+  { key: 'city', labelId: 'OrdersPage.city', required: true },
+  { key: 'state', labelId: 'OrdersPage.state', required: true },
+  { key: 'postalCode', labelId: 'OrdersPage.postalCode', required: true },
+];
+
+/**
+ * Switch a pickup order over to delivery, pay the fee, and move it onto the
+ * van for the same delivery day.
+ *
+ * Only offered before the weekly cutoff — after that the manifest is set. The
+ * fee is charged to the card already on file rather than asking for one again;
+ * a buyer with no saved card is sent to add one instead of being shown a dead
+ * button.
+ */
+const UpgradeToDelivery = ({
+  orderGroup,
+  lastShippingAddress,
+  savedPaymentMethodId,
+  inProgress,
+  error,
+  onUpgrade,
+  intl,
+}) => {
+  const [expanded, setExpanded] = useState(false);
+  const [address, setAddress] = useState({
+    addressLine1: lastShippingAddress?.line1 || '',
+    city: lastShippingAddress?.city || '',
+    state: lastShippingAddress?.state || '',
+    postalCode: lastShippingAddress?.postalCode || '',
+  });
+
+  const complete = ADDRESS_FIELDS.every(f => !f.required || address[f.key].trim());
+
+  if (!expanded) {
+    return (
+      <div className={css.upgradeBox}>
+        <div>
+          <span className={css.upgradeTitle}>
+            <FormattedMessage id="OrdersPage.upgradeTitle" />
+          </span>
+          <span className={css.upgradeBlurb}>
+            <FormattedMessage id="OrdersPage.upgradeBlurb" />
+          </span>
+        </div>
+        <InlineTextButton type="button" onClick={() => setExpanded(true)}>
+          <FormattedMessage id="OrdersPage.upgradeCta" />
+        </InlineTextButton>
+      </div>
+    );
+  }
+
+  if (!savedPaymentMethodId) {
+    return (
+      <div className={css.upgradeBox}>
+        <p className={css.upgradeBlurb}>
+          <FormattedMessage id="OrdersPage.upgradeNeedsCard" />
+        </p>
+        <NamedLink name="PaymentMethodsPage">
+          <FormattedMessage id="OrdersPage.upgradeAddCard" />
+        </NamedLink>
+      </div>
+    );
+  }
+
+  return (
+    <div className={css.upgradePanel}>
+      <span className={css.upgradeTitle}>
+        <FormattedMessage id="OrdersPage.upgradeAddressTitle" />
+      </span>
+
+      <div className={css.addressGrid}>
+        {ADDRESS_FIELDS.map(field => (
+          <label key={field.key} className={css.addressField}>
+            <span>{intl.formatMessage({ id: field.labelId })}</span>
+            <input
+              type="text"
+              value={address[field.key]}
+              disabled={inProgress}
+              onChange={e => setAddress({ ...address, [field.key]: e.target.value })}
+            />
+          </label>
+        ))}
+      </div>
+
+      <p className={css.upgradeBlurb}>
+        <FormattedMessage id="OrdersPage.upgradeFeeNote" />
+      </p>
+
+      {error ? (
+        <p className={css.error}>
+          <FormattedMessage id="OrdersPage.upgradeFailed" />
+        </p>
+      ) : null}
+
+      <div className={css.upgradeActions}>
+        <PrimaryButton
+          type="button"
+          inProgress={inProgress}
+          disabled={inProgress || !complete}
+          onClick={() => onUpgrade(address)}
+        >
+          <FormattedMessage id="OrdersPage.upgradeConfirm" />
+        </PrimaryButton>
+        <InlineTextButton type="button" disabled={inProgress} onClick={() => setExpanded(false)}>
+          <FormattedMessage id="OrdersPage.cancel" />
+        </InlineTextButton>
+      </div>
+    </div>
+  );
+};
+
+const OrderGroupDetail = ({ orderGroup, upgradeProps, intl }) => {
   const deliveryDate = formatDeliveryDate(orderGroup.deliveryDate);
   // A pickup order has a date but nothing is being delivered, so calling it a
   // delivery date reads as a promise we aren't making.
@@ -169,6 +293,10 @@ const OrderGroupDetail = ({ orderGroup, intl }) => {
         <p className={css.pickupNotice}>
           <FormattedMessage id="OrdersPage.pickupNotice" />
         </p>
+      ) : null}
+
+      {isPickup && upgradeProps?.canUpgrade ? (
+        <UpgradeToDelivery orderGroup={orderGroup} intl={intl} {...upgradeProps} />
       ) : null}
 
       {orderGroup.suborders.map(suborder => (
@@ -243,15 +371,23 @@ export const OrdersPageComponent = props => {
   const {
     orderGroups = [],
     orderGroup = null,
+    lastShippingAddress = null,
     fetchInProgress = false,
     fetchError = null,
+    upgradeInProgress = false,
+    upgradeError = null,
+    currentUser = null,
     scrollingDisabled = false,
     params = {},
     onLoadOrderGroups,
     onLoadOrderGroup,
+    onUpgradeToDelivery,
+    onFetchCurrentUser,
   } = props;
   const intl = useIntl();
+  const config = useConfiguration();
   const groupId = params.groupId;
+  const [cutoffPassed, setCutoffPassed] = useState(null);
 
   useEffect(() => {
     if (groupId) {
@@ -260,6 +396,49 @@ export const OrdersPageComponent = props => {
       onLoadOrderGroups();
     }
   }, [groupId, onLoadOrderGroup, onLoadOrderGroups]);
+
+  // Needed only on the detail view, and only to decide whether upgrading to
+  // delivery is still open and which card to charge.
+  useEffect(() => {
+    if (!groupId) return;
+    onFetchCurrentUser({
+      callParams: { include: ['stripeCustomer.defaultPaymentMethod'] },
+      updateHasListings: false,
+      updateNotifications: false,
+    });
+    fetchPickupSettings()
+      .then(settings => setCutoffPassed(!!settings?.cutoffPassed))
+      // Failing closed: if we can't tell whether the cutoff has passed, don't
+      // offer an upgrade we might not be able to honour.
+      .catch(() => setCutoffPassed(true));
+  }, [groupId, onFetchCurrentUser]);
+
+  const savedPaymentMethodId =
+    currentUser?.stripeCustomer?.defaultPaymentMethod?.attributes?.stripePaymentMethodId || null;
+
+  const handleUpgrade = shippingAddress => {
+    const publishableKey = config?.stripe?.publishableKey;
+    const stripe =
+      typeof window !== 'undefined' && window.Stripe && publishableKey
+        ? window.Stripe(publishableKey)
+        : null;
+    if (!stripe) return;
+    onUpgradeToDelivery({
+      orderGroup,
+      shippingAddress,
+      paymentMethodId: savedPaymentMethodId,
+      stripe,
+    });
+  };
+
+  const upgradeProps = {
+    canUpgrade: cutoffPassed === false && !orderGroup?.upgradedToDelivery,
+    lastShippingAddress,
+    savedPaymentMethodId,
+    inProgress: upgradeInProgress,
+    error: upgradeError,
+    onUpgrade: handleUpgrade,
+  };
 
   const title = intl.formatMessage({ id: 'OrdersPage.title' });
 
@@ -280,7 +459,7 @@ export const OrdersPageComponent = props => {
             </p>
           ) : groupId ? (
             orderGroup ? (
-              <OrderGroupDetail orderGroup={orderGroup} intl={intl} />
+              <OrderGroupDetail orderGroup={orderGroup} upgradeProps={upgradeProps} intl={intl} />
             ) : (
               <p className={css.empty}>
                 <FormattedMessage id="OrdersPage.notFound" />
@@ -327,12 +506,25 @@ OrdersPageComponent.propTypes = {
 };
 
 const mapStateToProps = state => {
-  const { orderGroups, orderGroup, fetchInProgress, fetchError } = state.OrdersPage;
+  const {
+    orderGroups,
+    orderGroup,
+    lastShippingAddress,
+    fetchInProgress,
+    fetchError,
+    upgradeInProgress,
+    upgradeError,
+  } = state.OrdersPage;
+  const { currentUser } = state.user;
   return {
     orderGroups,
     orderGroup,
+    lastShippingAddress,
     fetchInProgress,
     fetchError,
+    upgradeInProgress,
+    upgradeError,
+    currentUser,
     scrollingDisabled: isScrollingDisabled(state),
   };
 };
@@ -340,6 +532,8 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => ({
   onLoadOrderGroups: () => dispatch(loadOrderGroups()),
   onLoadOrderGroup: id => dispatch(loadOrderGroup({ id })),
+  onUpgradeToDelivery: params => dispatch(upgradeToDelivery(params)),
+  onFetchCurrentUser: params => dispatch(fetchCurrentUser(params)),
 });
 
 const OrdersPage = compose(connect(mapStateToProps, mapDispatchToProps))(OrdersPageComponent);

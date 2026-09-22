@@ -1,4 +1,5 @@
 const {
+  deliveryMethodOf,
   groupTransactions,
   toOrderGroup,
   financialsFor,
@@ -30,11 +31,13 @@ const tx = ({
   extraLineItems = [],
   isDeliveryOrder = false,
   payinTotal,
+  metadata = {},
 }) => ({
   id: { uuid: id },
   attributes: {
     createdAt,
     lastTransition,
+    metadata,
     payinTotal: money(payinTotal != null ? payinTotal : unitPrice * quantity),
     protectedData: { orderGroupId, deliveryDate, deliveryMethod, ...(isDeliveryOrder ? { isDeliveryOrder: true } : {}) },
     lineItems: [
@@ -300,5 +303,59 @@ describe('toOrderGroup()', () => {
     expect(group.deliveryDate).toBe('2026-09-04');
     expect(group.deliveryMethod).toBe('shipping');
     expect(group.customerName).toBe('Madi');
+  });
+});
+
+describe('deliveryMethodOf()', () => {
+  it('reads protected data when nothing has changed', () => {
+    expect(deliveryMethodOf(tx({ id: 'a', orderGroupId: 'og-a', deliveryMethod: 'pickup' }))).toBe(
+      'pickup'
+    );
+  });
+
+  it('lets metadata override, so a pickup order upgraded to delivery reads as delivery', () => {
+    // protectedData is fixed at creation and the purchase process has no
+    // transition that can rewrite it, so an upgrade is recorded in metadata.
+    const upgraded = tx({
+      id: 'a',
+      orderGroupId: 'og-a',
+      deliveryMethod: 'pickup',
+      metadata: { deliveryMethod: 'shipping', upgradedToDeliveryAt: '2026-09-22T12:00:00.000Z' },
+    });
+    expect(deliveryMethodOf(upgraded)).toBe('shipping');
+  });
+
+  it('returns null when neither source says anything', () => {
+    const bare = { attributes: {} };
+    expect(deliveryMethodOf(bare)).toBe(null);
+  });
+});
+
+describe('toOrderGroup() after a delivery upgrade', () => {
+  const findIncluded = buildIncludedIndex(included);
+
+  it('reports the group as delivery and flags the upgrade', () => {
+    const transactions = [
+      tx({
+        id: 'tx-1',
+        orderGroupId: 'og-a',
+        deliveryMethod: 'pickup',
+        metadata: { deliveryMethod: 'shipping', upgradedToDeliveryAt: '2026-09-22T12:00:00.000Z' },
+      }),
+    ];
+
+    const group = toOrderGroup('og-a', transactions, findIncluded);
+    expect(group.deliveryMethod).toBe('shipping');
+    expect(group.upgradedToDelivery).toBe(true);
+  });
+
+  it('leaves an untouched pickup order alone', () => {
+    const group = toOrderGroup(
+      'og-a',
+      [tx({ id: 'tx-1', orderGroupId: 'og-a', deliveryMethod: 'pickup' })],
+      findIncluded
+    );
+    expect(group.deliveryMethod).toBe('pickup');
+    expect(group.upgradedToDelivery).toBe(false);
   });
 });

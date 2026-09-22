@@ -30,6 +30,7 @@ const { followHandler, unfollowHandler, getFollowedHandler } = require('./api/fo
 const activeOrderGroup = require('./api/active-order-group');
 const orderGroups = require('./api/order-groups');
 const vendorSuborders = require('./api/vendor-suborders');
+const convertOrderToDelivery = require('./api/convert-order-to-delivery');
 const linkDeliveryItems = require('./api/link-delivery-items');
 const reconcileDelivery = require('./api/reconcile-delivery');
 const reportDeliveryProblem = require('./api/report-delivery-problem');
@@ -112,6 +113,7 @@ router.use('/follow-vendor', bodyParser.json());
 router.use('/active-order-group', bodyParser.json());
 router.use('/order-groups', bodyParser.json());
 router.use('/vendor-suborders', bodyParser.json());
+router.use('/convert-order-to-delivery', bodyParser.json());
 router.use('/link-delivery-items', bodyParser.json());
 router.use('/reconcile-delivery', bodyParser.json());
 router.use('/report-delivery-problem', bodyParser.json());
@@ -168,6 +170,10 @@ router.get('/active-order-group', activeOrderGroup);
 // side, and one packing list per customer on the vendor side.
 router.get('/order-groups', orderGroups);
 router.get('/vendor-suborders', vendorSuborders);
+
+// Upgrade a pickup order to delivery after the fact (fee already charged on a
+// standalone delivery transaction by the client).
+router.post('/convert-order-to-delivery', convertOrderToDelivery);
 
 // Standalone delivery: link item transactions to a delivery order, and
 // reconcile delivery orders (refund-on-full-denial / capture-on-accept).

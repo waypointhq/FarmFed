@@ -118,6 +118,21 @@ const currencyOf = tx => {
 const isDeliveryTransaction = tx => tx?.attributes?.protectedData?.isDeliveryOrder === true;
 
 /**
+ * Delivery method for a transaction.
+ *
+ * `protectedData` is fixed once the transaction is created — only a transition
+ * with an update-protected-data action can change it, and the purchase process
+ * has no such transition after checkout. Metadata, on the other hand, is
+ * writable by the operator at any time via the Integration API. So a pickup
+ * order that the buyer later upgrades to delivery records the change in
+ * metadata, and metadata wins here.
+ */
+const deliveryMethodOf = tx =>
+  tx?.attributes?.metadata?.deliveryMethod || tx?.attributes?.protectedData?.deliveryMethod || null;
+
+const wasUpgradedToDelivery = tx => !!tx?.attributes?.metadata?.upgradedToDeliveryAt;
+
+/**
  * Money for one vendor's slice of an order, per §4.
  *
  * Two commission models are possible and the marketplace is configured for one
@@ -288,7 +303,8 @@ const toOrderGroup = (orderGroupId, transactions, findIncluded) => {
     customerId,
     customerName: customer?.attributes?.profile?.displayName || 'Customer',
     deliveryDate: pd.deliveryDate || null,
-    deliveryMethod: pd.deliveryMethod || (deliveryTx ? 'shipping' : 'pickup'),
+    deliveryMethod: deliveryMethodOf(first) || (deliveryTx ? 'shipping' : 'pickup'),
+    upgradedToDelivery: itemTxs.some(wasUpgradedToDelivery),
     deliveryTransactionId: deliveryTx?.id?.uuid || null,
     status: rollUpStatus(suborders.length ? suborders.flatMap(s => s.items) : []),
     itemCount: itemTxs.length,
@@ -318,6 +334,8 @@ const groupTransactions = transactions => {
 
 module.exports = {
   generateOrderGroupId,
+  deliveryMethodOf,
+  wasUpgradedToDelivery,
   groupTransactions,
   toOrderGroup,
   toSuborders,

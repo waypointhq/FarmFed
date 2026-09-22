@@ -1788,5 +1788,9 @@
   "TopbarMobileMenu.ordersLink": "Your orders",
   "TopbarMobileMenu.vendorOrdersLink": "Orders to pack",
   "OrdersPage.messagesLink": "Messages",
-  "VendorOrdersPage.messagesLink": "Messages"
+  "VendorOrdersPage.messagesLink": "Messages",
+  "OrdersPage.selfPickup": "Self pickup",
+  "OrdersPage.readyForPickup": "Ready {date}",
+  "OrdersPage.pickupNotice": "This is a self-pickup order \u2014 nothing is being delivered. Message each vendor below to arrange a pickup time and place.",
+  "OrdersPage.messageVendor": "Message {vendorName}"
 }

@@ -149,6 +149,30 @@
   }
 }
 
+.pickupNotice {
+  margin: 0 0 24px 0;
+  padding: 12px 16px;
+  background-color: var(--colorAttentionSubtle);
+  border-radius: 8px;
+  color: var(--colorGrey700);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.messageVendorLink {
+  display: block;
+  padding: 10px 16px;
+  border-top: 1px solid var(--colorGrey50);
+  font-size: 14px;
+  color: var(--marketplaceColor);
+  text-decoration: none;
+
+  &:hover {
+    background-color: var(--colorGrey50);
+    text-decoration: none;
+  }
+}
+
 .vendorSection {
   border: 1px solid var(--colorGrey100);
   border-radius: 8px;

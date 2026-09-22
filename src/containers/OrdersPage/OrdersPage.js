@@ -59,6 +59,11 @@ const ItemRow = ({ item, intl }) => (
 /**
  * One vendor's slice of the order. Two vendors selling the same product stay
  * in separate sections — they are separate suborders and never merge.
+ *
+ * The message link opens the conversation on one of this vendor's
+ * transactions. Any of them reaches the same vendor, so it uses the first —
+ * the point is that arranging a pickup time shouldn't mean hunting through the
+ * inbox for the right thread.
  */
 const VendorSection = ({ suborder, intl }) => (
   <section className={css.vendorSection}>
@@ -73,6 +78,18 @@ const VendorSection = ({ suborder, intl }) => (
         <ItemRow key={item.transactionId} item={item} intl={intl} />
       ))}
     </ul>
+    {suborder.transactionIds?.length ? (
+      <NamedLink
+        className={css.messageVendorLink}
+        name="OrderDetailsPage"
+        params={{ id: suborder.transactionIds[0] }}
+      >
+        <FormattedMessage
+          id="OrdersPage.messageVendor"
+          values={{ vendorName: suborder.vendorName }}
+        />
+      </NamedLink>
+    ) : null}
   </section>
 );
 
@@ -109,6 +126,9 @@ const TotalsBlock = ({ totals, intl }) => {
 
 const OrderGroupDetail = ({ orderGroup, intl }) => {
   const deliveryDate = formatDeliveryDate(orderGroup.deliveryDate);
+  // A pickup order has a date but nothing is being delivered, so calling it a
+  // delivery date reads as a promise we aren't making.
+  const isPickup = orderGroup.deliveryMethod === 'pickup';
 
   return (
     <div className={css.detail}>
@@ -137,17 +157,19 @@ const OrderGroupDetail = ({ orderGroup, intl }) => {
           <div className={css.detailMetaItem}>
             <dt>
               <FormattedMessage
-                id={
-                  orderGroup.deliveryMethod === 'pickup'
-                    ? 'OrdersPage.pickupDate'
-                    : 'OrdersPage.deliveryDate'
-                }
+                id={isPickup ? 'OrdersPage.selfPickup' : 'OrdersPage.deliveryDate'}
               />
             </dt>
             <dd>{deliveryDate}</dd>
           </div>
         ) : null}
       </dl>
+
+      {isPickup ? (
+        <p className={css.pickupNotice}>
+          <FormattedMessage id="OrdersPage.pickupNotice" />
+        </p>
+      ) : null}
 
       {orderGroup.suborders.map(suborder => (
         <VendorSection key={suborder.vendorId} suborder={suborder} intl={intl} />
@@ -188,7 +210,14 @@ const OrderGroupRow = ({ orderGroup, intl }) => {
             {deliveryDate ? (
               <>
                 {' · '}
-                <FormattedMessage id="OrdersPage.arriving" values={{ date: deliveryDate }} />
+                <FormattedMessage
+                  id={
+                    orderGroup.deliveryMethod === 'pickup'
+                      ? 'OrdersPage.readyForPickup'
+                      : 'OrdersPage.arriving'
+                  }
+                  values={{ date: deliveryDate }}
+                />
               </>
             ) : null}
           </span>

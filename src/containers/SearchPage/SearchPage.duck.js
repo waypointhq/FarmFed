@@ -34,13 +34,40 @@ const RESULT_PAGE_SIZE = 24;
 //   1. Register the search schema (one-time, for dev + live marketplaces):
 //        flex-cli search set --key sortRandom --type long --scope metadata -m <marketplace>
 //   2. Seed values by running the job once: `yarn shuffle-listings`
-//
-// Note: `request()` uses window.fetch, so this resolves to `false` during SSR;
-// the toggle therefore takes effect on client-side renders/navigations.
 const DAILY_SHUFFLE_SORT = 'meta_sortRandom';
 const SHUFFLE_SETTING_TTL_MS = 60 * 1000;
+// SSR renders the browse page before the browser ever runs, and the initial
+// page state is serialized into the HTML rather than re-fetched on hydration.
+// So if the setting can't be read during SSR, a fresh page load is stuck with
+// the API's default order no matter what the toggle says — only client-side
+// navigations would shuffle. Hence the server-side path below.
+const SSR_SETTING_TIMEOUT_MS = 2000;
 let shuffleSettingCache = { value: false, expiresAt: 0 };
 let shuffleSettingInFlight = null;
+
+// `request()` in util/api goes through window.fetch, which doesn't exist during
+// SSR. The shuffle setting is public, unauthenticated data, so SSR can fetch it
+// straight from our own API with an absolute URL instead. Timed out hard: a
+// hanging request here would hang the render.
+const fetchShuffleSettingForSSR = () => {
+  const rootURL = process.env.REACT_APP_MARKETPLACE_ROOT_URL;
+  if (!rootURL || typeof fetch !== 'function') {
+    return Promise.resolve(false);
+  }
+
+  const controller = typeof AbortController === 'function' ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), SSR_SETTING_TIMEOUT_MS) : null;
+
+  return fetch(`${rootURL.replace(/\/$/, '')}/api/listing-shuffle-settings`, {
+    ...(controller ? { signal: controller.signal } : {}),
+  })
+    .then(res => (res.ok ? res.json() : null))
+    .then(settings => !!settings?.enabled)
+    .catch(() => false)
+    .finally(() => {
+      if (timer) clearTimeout(timer);
+    });
+};
 
 const getDailyShuffleEnabled = () => {
   const now = Date.now();
@@ -50,16 +77,18 @@ const getDailyShuffleEnabled = () => {
   if (shuffleSettingInFlight) {
     return shuffleSettingInFlight;
   }
-  shuffleSettingInFlight = fetchListingShuffleSettings()
+  const fetchSetting =
+    typeof window === 'undefined' ? fetchShuffleSettingForSSR() : fetchListingShuffleSettings();
+  shuffleSettingInFlight = fetchSetting
     .then(settings => {
-      const value = !!settings?.enabled;
+      const value = typeof settings === 'boolean' ? settings : !!settings?.enabled;
       shuffleSettingCache = { value, expiresAt: Date.now() + SHUFFLE_SETTING_TTL_MS };
       shuffleSettingInFlight = null;
       return value;
     })
     .catch(() => {
-      // SSR (no window.fetch) or endpoint error: fall back to "off" so search
-      // always works; cache briefly to avoid hammering on repeated failures.
+      // Endpoint error: fall back to "off" so search always works; cache
+      // briefly to avoid hammering on repeated failures.
       shuffleSettingCache = { value: false, expiresAt: Date.now() + SHUFFLE_SETTING_TTL_MS };
       shuffleSettingInFlight = null;
       return false;
@@ -390,10 +419,23 @@ const searchCategoryRowsPayloadCreator = async (
   const { dispatch, extra: sdk } = thunkAPI;
   const sanitizeConfig = { listingFields: config?.listing?.listingFields };
 
+  // A row only shows the first handful of listings in its category, and the
+  // API's default order is newest first — so the vendors who joined earliest
+  // were permanently at the far end of every row. The daily shuffle gives each
+  // listing a turn near the front, and it is the same admin setting and the
+  // same sort the flat grid already uses, so the two views agree.
+  const useDailyShuffle = await getDailyShuffleEnabled();
+  const sortMaybe = useDailyShuffle ? { sort: DAILY_SHUFFLE_SORT } : {};
+
   const responses = await Promise.all(
     categoryIds.map(id =>
       sdk.listings
-        .query({ ...searchParams, pub_categoryLevel1: id, perPage: CATEGORY_ROW_PAGE_SIZE })
+        .query({
+          ...searchParams,
+          ...sortMaybe,
+          pub_categoryLevel1: id,
+          perPage: CATEGORY_ROW_PAGE_SIZE,
+        })
         .then(response => {
           dispatch(addMarketplaceEntities(response, sanitizeConfig));
           return { id, ids: resultIds(response.data) };

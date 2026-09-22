@@ -289,14 +289,17 @@ const OrderGroupDetail = ({ orderGroup, upgradeProps, intl }) => {
         ) : null}
       </dl>
 
+      {/* Sits directly under the header on a pickup order: switching to
+          delivery is the decision a buyer is most likely to want to make here,
+          so it shouldn't be below the item list. */}
+      {isPickup && upgradeProps?.canUpgrade ? (
+        <UpgradeToDelivery orderGroup={orderGroup} intl={intl} {...upgradeProps} />
+      ) : null}
+
       {isPickup ? (
         <p className={css.pickupNotice}>
           <FormattedMessage id="OrdersPage.pickupNotice" />
         </p>
-      ) : null}
-
-      {isPickup && upgradeProps?.canUpgrade ? (
-        <UpgradeToDelivery orderGroup={orderGroup} intl={intl} {...upgradeProps} />
       ) : null}
 
       {orderGroup.suborders.map(suborder => (

@@ -1794,7 +1794,7 @@
   "OrdersPage.pickupNotice": "This is a self-pickup order \u2014 nothing is being delivered. Message each vendor below to arrange a pickup time and place.",
   "OrdersPage.messageVendor": "Message {vendorName}",
   "OrdersPage.upgradeTitle": "Prefer delivery?",
-  "OrdersPage.upgradeBlurb": "Switch this order to delivery and we'll bring it to you on the same day.",
+  "OrdersPage.upgradeBlurb": "Pay the delivery fee and we'll bring this order to you on your scheduled delivery day instead.",
   "OrdersPage.upgradeCta": "Switch to delivery",
   "OrdersPage.upgradeAddressTitle": "Where should we deliver it?",
   "OrdersPage.upgradeNeedsCard": "Add a payment method first and we'll charge the delivery fee to it.",

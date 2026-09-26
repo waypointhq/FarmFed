@@ -480,6 +480,23 @@ export const convertOrderToDelivery = ({ orderGroupId, deliveryTransactionId, sh
   });
 };
 
+// Report a cart checkout that failed partway. Refunds anything already charged
+// in that checkout and records the failure for the admin panel.
+export const reportCheckoutFailure = ({ orderGroupId, reason, itemCount, chargedOrderIds }) => {
+  return request('/api/checkout-failures', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderGroupId, reason, itemCount, chargedOrderIds }),
+  });
+};
+
+export const fetchCheckoutFailures = () => {
+  return request('/api/checkout-failures', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
 // Link item transactions to a standalone delivery transaction's order group
 // so reconciliation can decide whether the whole order was denied.
 export const linkDeliveryItems = ({ deliveryTransactionId, itemTransactionIds }) => {

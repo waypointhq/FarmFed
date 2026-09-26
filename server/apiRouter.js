@@ -31,6 +31,10 @@ const activeOrderGroup = require('./api/active-order-group');
 const orderGroups = require('./api/order-groups');
 const vendorSuborders = require('./api/vendor-suborders');
 const convertOrderToDelivery = require('./api/convert-order-to-delivery');
+const {
+  postHandler: postCheckoutFailure,
+  getHandler: getCheckoutFailures,
+} = require('./api/checkout-failures');
 const linkDeliveryItems = require('./api/link-delivery-items');
 const reconcileDelivery = require('./api/reconcile-delivery');
 const reportDeliveryProblem = require('./api/report-delivery-problem');
@@ -114,6 +118,7 @@ router.use('/active-order-group', bodyParser.json());
 router.use('/order-groups', bodyParser.json());
 router.use('/vendor-suborders', bodyParser.json());
 router.use('/convert-order-to-delivery', bodyParser.json());
+router.use('/checkout-failures', bodyParser.json());
 router.use('/link-delivery-items', bodyParser.json());
 router.use('/reconcile-delivery', bodyParser.json());
 router.use('/report-delivery-problem', bodyParser.json());
@@ -174,6 +179,11 @@ router.get('/vendor-suborders', vendorSuborders);
 // Upgrade a pickup order to delivery after the fact (fee already charged on a
 // standalone delivery transaction by the client).
 router.post('/convert-order-to-delivery', convertOrderToDelivery);
+
+// A cart checkout that failed partway: refunds anything already charged in it
+// and records the failure, which nothing else in the system does.
+router.post('/checkout-failures', postCheckoutFailure);
+router.get('/checkout-failures', getCheckoutFailures);
 
 // Standalone delivery: link item transactions to a delivery order, and
 // reconcile delivery orders (refund-on-full-denial / capture-on-accept).

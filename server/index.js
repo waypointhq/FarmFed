@@ -354,6 +354,7 @@ settingsStore
     'device-tokens',
     'announcements',
     'listing-shuffle-settings',
+    'checkout-failures',
   ])
   .catch(e => console.error('[settingsStore] init failed:', e.message));
 

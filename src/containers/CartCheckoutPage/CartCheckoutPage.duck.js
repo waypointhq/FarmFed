@@ -5,6 +5,7 @@ import {
   createOnfleetTask,
   notifyTransition,
   linkDeliveryItems,
+  reportCheckoutFailure,
 } from '../../util/api';
 import { storableError } from '../../util/errors';
 import * as log from '../../util/log';
@@ -332,13 +333,51 @@ const processCartCheckoutPayloadCreator = async (
         error: realErrorMessage(e) || 'Transaction failed',
       });
 
-      // If first item fails (card decline), stop processing
-      if (i === 0) {
-        return rejectWithValue({
-          results,
-          error: 'Payment declined. Please check your card details.',
+      // Stop the whole checkout on any payment failure, and unwind what was
+      // already charged in it.
+      //
+      // This used to abort only when the FIRST item failed. A card that failed
+      // on item 3 of 8 left items 1 and 2 charged, items 3-8 never created,
+      // and the buyer holding a partial order they never agreed to. The card
+      // is the same for every item, so a failure partway is a failure for the
+      // whole cart — there is no sensible way to deliver half of it.
+      const chargedOrderIds = results.filter(r => r.success && r.orderId).map(r => r.orderId);
+
+      let refundedIds = [];
+      try {
+        const unwind = await reportCheckoutFailure({
+          orderGroupId: effectiveGroupId,
+          reason: realErrorMessage(e) || 'Payment failed',
+          itemCount: cartItems.length,
+          chargedOrderIds,
+        });
+        refundedIds = unwind?.refunded || [];
+      } catch (reportError) {
+        // The buyer still needs to be told their checkout failed, so a failure
+        // to unwind must not swallow the original error. It is logged loudly
+        // because it is the case where someone is left out of pocket.
+        log.error(reportError, 'cart-checkout-unwind-failed', {
+          orderGroupId: effectiveGroupId,
+          chargedOrderIds,
         });
       }
+
+      // Anything refunded is no longer a completed order, so the results view
+      // must not show it as one.
+      const refunded = new Set(refundedIds);
+      const finalResults = results.map(r =>
+        r.success && refunded.has(r.orderId)
+          ? { ...r, success: false, refunded: true, error: 'Refunded — checkout could not be completed' }
+          : r
+      );
+
+      return rejectWithValue({
+        results: finalResults,
+        error:
+          chargedOrderIds.length > 0
+            ? 'Your payment failed partway through checkout. Anything already charged has been refunded — please check your card and try again.'
+            : 'Payment declined. Please check your card details.',
+      });
     }
   }
 

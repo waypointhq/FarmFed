@@ -1806,5 +1806,15 @@
   "OrdersPage.addressLine1": "Street address",
   "OrdersPage.city": "City",
   "OrdersPage.state": "State",
-  "OrdersPage.postalCode": "ZIP code"
+  "OrdersPage.postalCode": "ZIP code",
+  "AdminPage.checkoutFailuresTab": "Failed checkouts",
+  "AdminPage.checkoutFailuresTitle": "Failed checkouts",
+  "AdminPage.checkoutFailuresBlurb": "Customers whose payment failed partway through checkout. These leave no order and send no email, so this is the only place they show up. Anything already charged is refunded automatically.",
+  "AdminPage.checkoutFailuresRefresh": "Refresh",
+  "AdminPage.checkoutFailuresLoading": "Loading\u2026",
+  "AdminPage.checkoutFailuresError": "Could not load failed checkouts.",
+  "AdminPage.checkoutFailuresEmpty": "No failed checkouts recorded.",
+  "AdminPage.checkoutFailuresNoCharge": "Nothing charged",
+  "AdminPage.checkoutFailuresRefunded": "{count, plural, one {# item refunded} other {# items refunded}}",
+  "AdminPage.checkoutFailuresRefundFailed": "{count, plural, one {# refund FAILED} other {# refunds FAILED}}"
 }

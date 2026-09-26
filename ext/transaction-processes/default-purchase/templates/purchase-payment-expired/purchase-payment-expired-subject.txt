@@ -1,0 +1,1 @@
+{{set-translations (asset "content/email-texts.json")}}{{t "PurchasePaymentExpired.Subject" "Your order didn't go through — {listingTitle} is still available" listingTitle=transaction.listing.title}}

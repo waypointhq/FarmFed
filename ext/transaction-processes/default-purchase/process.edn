@@ -188,7 +188,17 @@
    :from :state/completed,
    :to :state/reviewed}],
  :notifications
- [{:name :notification/order-receipt,
+ [;; Cart recovery. A checkout that never completes leaves no order, no email
+  ;; and nothing the buyer can act on — they just don't get their food. This is
+  ;; the one signal the process itself can give them, and it doubles as an
+  ;; abandoned-cart nudge: expire-payment fires 15 minutes after a payment is
+  ;; started and never confirmed, whether the card failed or they closed the
+  ;; tab.
+  {:name :notification/purchase-payment-expired-customer,
+   :on :transition/expire-payment,
+   :to :actor.role/customer,
+   :template :purchase-payment-expired}
+  {:name :notification/order-receipt,
    :on :transition/confirm-payment,
    ;; This notification is delayed to give the customer a chance to verify their
    ;; email address, in case they are a new customer.

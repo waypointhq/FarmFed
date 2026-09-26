@@ -44,6 +44,7 @@ import PickupScheduleTab from './PickupScheduleTab/PickupScheduleTab';
 import TaxSettingsTab from './TaxSettingsTab/TaxSettingsTab';
 import ListingShuffleTab from './ListingShuffleTab/ListingShuffleTab';
 import BulletinBoardTab from './BulletinBoardTab/BulletinBoardTab';
+import CheckoutFailuresTab from './CheckoutFailuresTab/CheckoutFailuresTab';
 
 import css from './AdminPage.module.css';
 
@@ -56,6 +57,7 @@ const PICKUP_TAB = 'pickup';
 const TAX_TAB = 'tax';
 const SHUFFLE_TAB = 'shuffle';
 const BULLETIN_TAB = 'bulletin';
+const CHECKOUT_FAILURES_TAB = 'checkout-failures';
 
 const AdminPageComponent = props => {
   const {
@@ -168,6 +170,7 @@ const AdminPageComponent = props => {
     { id: TAX_TAB, label: 'AdminPage.taxTab', show: flags.taxBreakdown },
     { id: SHUFFLE_TAB, label: 'AdminPage.shuffleTab', show: flags.listingShuffle },
     { id: BULLETIN_TAB, label: 'AdminPage.bulletinTab', show: flags.vendorBulletin },
+    { id: CHECKOUT_FAILURES_TAB, label: 'AdminPage.checkoutFailuresTab', show: true },
   ].filter(t => t.show);
 
   return (
@@ -291,6 +294,8 @@ const AdminPageComponent = props => {
                 onClearSuccess={onClearShuffleSuccess}
               />
             )}
+
+            {activeTab === CHECKOUT_FAILURES_TAB && <CheckoutFailuresTab />}
 
             {activeTab === BULLETIN_TAB && flags.vendorBulletin && (
               <BulletinBoardTab

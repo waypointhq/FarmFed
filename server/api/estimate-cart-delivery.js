@@ -1,6 +1,7 @@
 const { geocodeAddress } = require('../api-util/geocode');
 const { haversineDistanceMiles } = require('../api-util/distance');
 const { getDeliverySettings } = require('../api-util/deliveryRate');
+const { checkDeliveryZone } = require('../api-util/deliveryZone');
 
 /**
  * POST /api/estimate-cart-delivery
@@ -17,6 +18,19 @@ module.exports = async (req, res) => {
     const { shippingAddress } = req.body;
     if (!shippingAddress) {
       return res.status(400).json({ error: 'shippingAddress is required' });
+    }
+
+    // Checked here as well as at initiate so the buyer is told before they
+    // reach the payment step, rather than having the order rejected after
+    // they've filled everything in.
+    const zone = await checkDeliveryZone(shippingAddress);
+    if (!zone.allowed) {
+      return res.status(200).json({
+        outsideDeliveryZone: true,
+        reason: zone.reason,
+        totalDistanceMiles: 0,
+        totalFeeCents: 0,
+      });
     }
 
     const {

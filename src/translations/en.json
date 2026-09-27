@@ -1818,5 +1818,7 @@
   "AdminPage.checkoutFailuresRefunded": "{count, plural, one {# item refunded} other {# items refunded}}",
   "AdminPage.checkoutFailuresRefundFailed": "{count, plural, one {# refund FAILED} other {# refunds FAILED}}",
   "FieldPasswordInput.show": "Show password",
-  "FieldPasswordInput.hide": "Hide password"
+  "FieldPasswordInput.hide": "Hide password",
+  "CartCheckoutPage.outsideDeliveryZone": "Sorry \u2014 that address is outside our delivery area. You can still choose self pickup and collect from the vendor.",
+  "CartCheckoutPage.addressUnverifiable": "We couldn't find that address. Please check it and try again, or choose self pickup."
 }

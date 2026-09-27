@@ -2,6 +2,7 @@ const { getSdk, getIntegrationSdk, handleError } = require('../api-util/sdk');
 const { isCutoffPassed } = require('../api-util/pickupSchedule');
 const { deliveryMethodOf, isDeliveryTransaction } = require('../api-util/orderGroups');
 const { addNotification } = require('../api-util/notifications');
+const { checkDeliveryZone } = require('../api-util/deliveryZone');
 const { getTokensForUser } = require('../api-util/deviceTokens');
 const { sendPushNotifications } = require('../api-util/pushSender');
 
@@ -42,6 +43,13 @@ module.exports = async (req, res) => {
     // manifest is already set.
     if (isCutoffPassed()) {
       return res.status(409).json({ error: 'cutoff-passed' });
+    }
+
+    // The buyer types a fresh address here, so it needs the same service-area
+    // check as an order that chose delivery at checkout.
+    const zone = await checkDeliveryZone(shippingAddress);
+    if (!zone.allowed) {
+      return res.status(403).json({ error: 'outside-delivery-zone', reason: zone.reason });
     }
 
     const sdk = getSdk(req, res);

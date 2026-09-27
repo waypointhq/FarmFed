@@ -10,6 +10,7 @@ const {
   fetchCommission,
 } = require('../api-util/sdk');
 const { getNextPickupDate } = require('../api-util/pickupSchedule');
+const { checkDeliveryZone } = require('../api-util/deliveryZone');
 const { generateOrderGroupId } = require('../api-util/orderGroups');
 
 const { Money } = sharetribeSdk.types;
@@ -51,12 +52,27 @@ const getMetadata = (orderData, transition) => {
     : {};
 };
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
   const { isSpeculative, orderData, bodyParams, queryParams } = req.body;
   const transitionName = bodyParams.transition;
   const sdk = getSdk(req, res);
   let lineItems = null;
   let metadataMaybe = {};
+
+  // Refuse deliveries outside the service area. This is the enforcement point
+  // rather than the UI, because the shipping address arrives from the client
+  // and a check that only runs in the browser is a suggestion, not a rule.
+  if (orderData?.deliveryMethod === 'shipping') {
+    const shippingAddress =
+      orderData.shippingAddress || bodyParams?.params?.protectedData?.shippingAddress;
+    const zone = await checkDeliveryZone(shippingAddress);
+    if (!zone.allowed) {
+      return res.status(403).json({
+        error: 'outside-delivery-zone',
+        reason: zone.reason,
+      });
+    }
+  }
 
   Promise.all([listingPromise(sdk, bodyParams?.params?.listingId), fetchCommission(sdk)])
     .then(async ([showListingResponse, fetchAssetsResponse]) => {

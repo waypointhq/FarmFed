@@ -114,6 +114,10 @@ const CartCheckoutPageContent = props => {
   }, [savedCard, paymentChoice, cardReady]);
   const [estimatedDelivery, setEstimatedDelivery] = useState(null);
   const [estimatedFee, setEstimatedFee] = useState(null);
+  // Set when the typed shipping address falls outside the delivery zone, or
+  // can't be located at all. The server refuses these at initiate either way;
+  // this is so the buyer finds out before filling in their card.
+  const [outsideZone, setOutsideZone] = useState(null);
   // Per-charge card processing fee (cents), from the server so it stays in
   // sync with the line item added in server/api-util/lineItems.js.
   const [processingFeeCents, setProcessingFeeCents] = useState(0);
@@ -307,6 +311,15 @@ const CartCheckoutPageContent = props => {
       estimateCartDelivery({ listingIds, shippingAddress: address })
         .then(result => {
           const { totalFeeCents, totalDistanceMiles, rateCentsPerMile } = result;
+          if (result.outsideDeliveryZone) {
+            setOutsideZone(result.reason || 'outside');
+            setEstimatedDelivery(null);
+            setDeliveryDistanceMiles(null);
+            setEstimatingBreakdown(false);
+            setDeliveryEstimateError(null);
+            return;
+          }
+          setOutsideZone(null);
           setEstimatedDelivery(totalFeeCents > 0 ? totalFeeCents : null);
           setDeliveryDistanceMiles(totalDistanceMiles > 0 ? totalDistanceMiles : null);
           if (rateCentsPerMile > 0) setDeliveryRateCents(rateCentsPerMile);
@@ -843,13 +856,28 @@ const CartCheckoutPageContent = props => {
           </div>
         ) : null}
 
+        {outsideZone && hasShippingItems ? (
+          <div className={css.errorMessage}>
+            <FormattedMessage
+              id={
+                outsideZone === 'unverifiable'
+                  ? 'CartCheckoutPage.addressUnverifiable'
+                  : 'CartCheckoutPage.outsideDeliveryZone'
+              }
+            />
+          </div>
+        ) : null}
+
         <PrimaryButton
           type="submit"
           className={css.submitButton}
           disabled={
             (paymentChoice === 'new' && !cardReady) ||
             checkoutInProgress ||
-            ((shippingAvailable || pickupAvailable) && !selectedDeliveryMethod)
+            ((shippingAvailable || pickupAvailable) && !selectedDeliveryMethod) ||
+            // Out of area: the server would refuse this at initiate anyway, so
+            // don't let them fill in a card first.
+            (!!outsideZone && hasShippingItems)
           }
         >
           {checkoutInProgress ? (

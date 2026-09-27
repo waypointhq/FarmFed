@@ -1816,5 +1816,7 @@
   "AdminPage.checkoutFailuresEmpty": "No failed checkouts recorded.",
   "AdminPage.checkoutFailuresNoCharge": "Nothing charged",
   "AdminPage.checkoutFailuresRefunded": "{count, plural, one {# item refunded} other {# items refunded}}",
-  "AdminPage.checkoutFailuresRefundFailed": "{count, plural, one {# refund FAILED} other {# refunds FAILED}}"
+  "AdminPage.checkoutFailuresRefundFailed": "{count, plural, one {# refund FAILED} other {# refunds FAILED}}",
+  "FieldPasswordInput.show": "Show password",
+  "FieldPasswordInput.hide": "Hide password"
 }

@@ -8,7 +8,13 @@ import { propTypes } from '../../../util/types';
 import * as validators from '../../../util/validators';
 import { getPropsForCustomUserFieldInputs } from '../../../util/userHelpers';
 
-import { Form, PrimaryButton, FieldTextInput, CustomExtendedDataField } from '../../../components';
+import {
+  Form,
+  PrimaryButton,
+  FieldTextInput,
+  FieldPasswordInput,
+  CustomExtendedDataField,
+} from '../../../components';
 
 import FieldSelectUserType from '../FieldSelectUserType';
 import UserFieldDisplayName from '../UserFieldDisplayName';
@@ -184,9 +190,8 @@ const SignupFormComponent = props => (
                 intl={intl}
               />
 
-              <FieldTextInput
+              <FieldPasswordInput
                 className={css.password}
-                type="password"
                 id={formId ? `${formId}.password` : 'password'}
                 name="password"
                 autoComplete="new-password"

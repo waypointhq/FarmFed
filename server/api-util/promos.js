@@ -689,6 +689,28 @@ const createPersonalPromo = async ({ user, uses, expiresAt, message, createdBy }
   );
 };
 
+/**
+ * One gifted-only code shared by everyone in a group gift. Each customer's
+ * own gift sets how many free deliveries they get, so the promo itself has
+ * no total limit.
+ */
+const createGroupGiftPromo = async ({ count, uses, expiresAt, message, createdBy }) => {
+  const day = moment.tz(TIMEZONE).format('MMM D');
+  return createPromo(
+    {
+      code: await generateUniqueCode(),
+      name: `Gift – ${day} (${count} customers)`,
+      title: 'Free Delivery',
+      message,
+      audience: AUDIENCE_GIFTED,
+      expiryType: expiresAt ? 'date' : 'never',
+      endsAt: expiresAt,
+      perCustomerLimit: toPositiveInt(uses, 1),
+    },
+    { createdBy, activate: true }
+  );
+};
+
 // ================ Customer: My Promos ================ //
 
 const customerView = (promo, evaluation = {}) => ({
@@ -927,6 +949,7 @@ module.exports = {
   updateGift,
   revokeGift,
   createPersonalPromo,
+  createGroupGiftPromo,
   customerView,
   savePromoForUser,
   listForUser,

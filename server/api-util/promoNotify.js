@@ -1,7 +1,7 @@
 const moment = require('moment-timezone');
-const { sendEmail, escapeHtml } = require('./email');
-const { addNotification } = require('./notifications');
-const { getTokensForUser } = require('./deviceTokens');
+const { sendEmailBatch, escapeHtml } = require('./email');
+const { addNotifications } = require('./notifications');
+const { getTokensForUsers } = require('./deviceTokens');
 const { sendPushNotifications } = require('./pushSender');
 const { getRootURL } = require('./rootURL');
 const { TIMEZONE } = require('./promos');
@@ -136,44 +136,61 @@ const giftEmail = ({ code, title, message, uses, expiresAt, brand }) => {
 };
 
 /**
- * Email the customer about a gifted promo.
+ * Email each gifted customer about their promo, in batches.
  *
- * @returns {Promise<boolean>} whether it went out
+ * @param {Object} params
+ * @param {Object} params.sdk any Marketplace SDK instance (for branding)
+ * @param {Object} params.promo
+ * @param {Array<{ userId, email, gift }>} params.recipients
+ * @returns {Promise<Object>} userId -> whether their email went out
  */
-const sendGiftEmail = async ({ sdk, to, promo, gift }) => {
-  if (!to) return false;
-  const brand = await getBranding(sdk);
-  const { subject, html, text } = giftEmail({
-    code: promo.code,
-    title: promo.title,
-    message: gift.message || promo.message,
-    uses: gift.uses,
-    expiresAt: gift.expiresAt || promo.endsAt,
-    brand,
-  });
-  const result = await sendEmail({ to, subject, html, text });
-  return result.sent;
+const sendGiftEmails = async ({ sdk, promo, recipients }) => {
+  const withEmail = recipients.filter(r => r.email);
+  const brand = withEmail.length ? await getBranding(sdk) : null;
+  const sent = await sendEmailBatch(
+    withEmail.map(({ email, gift }) => ({
+      to: email,
+      ...giftEmail({
+        code: promo.code,
+        title: promo.title,
+        message: gift.message || promo.message,
+        uses: gift.uses,
+        expiresAt: gift.expiresAt || promo.endsAt,
+        brand,
+      }),
+    }))
+  );
+  return recipients.reduce((acc, r) => {
+    const i = withEmail.indexOf(r);
+    acc[r.userId] = i >= 0 ? sent[i] : false;
+    return acc;
+  }, {});
 };
 
 /**
- * Bell notification plus a push to the customer's devices. Both open My
- * Promos with the new promo first.
+ * Bell notification plus a push to each customer's devices, in one write and
+ * one push batch. Both open My Promos with the new promo first.
  *
- * @returns {Promise<boolean>} whether the in-app notification was created
+ * @param {Object} params
+ * @param {string[]} params.userIds
+ * @param {Object} params.promo
+ * @returns {Promise<boolean>} whether the in-app notifications were created
  */
-const sendGiftNotification = async ({ userId, promo }) => {
+const sendGiftNotifications = async ({ userIds, promo }) => {
   const link = '/my-promos';
   const body = 'Free delivery is on us! Tap to see your promo.';
-  await addNotification({
-    userId,
-    type: 'promo',
-    promoId: promo.id,
-    title: promo.title,
-    body,
-    link,
-  });
+  await addNotifications(
+    userIds.map(userId => ({
+      userId,
+      type: 'promo',
+      promoId: promo.id,
+      title: promo.title,
+      body,
+      link,
+    }))
+  );
 
-  const tokens = getTokensForUser(userId);
+  const tokens = getTokensForUsers(userIds);
   if (tokens.length > 0) {
     sendPushNotifications(
       tokens.map(t => ({
@@ -187,4 +204,4 @@ const sendGiftNotification = async ({ userId, promo }) => {
   return true;
 };
 
-module.exports = { sendGiftEmail, sendGiftNotification, giftEmail, getBranding };
+module.exports = { sendGiftEmails, sendGiftNotifications, giftEmail, getBranding };

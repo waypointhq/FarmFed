@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import classNames from 'classnames';
 
 import { adminFetchPromos } from '../../../util/api';
-import { StatusBadge, CustomerPicker, usePromoT, usesLabel, expiresLabel } from './shared';
+import { StatusBadge, CustomerSearch, usePromoT, usesLabel, expiresLabel } from './shared';
 
 import css from './PromotionsTab.module.css';
 
@@ -109,11 +109,7 @@ const PromoList = props => {
       <section className={classNames(css.customerLookup)}>
         <h3 className={css.sectionTitle}>{t('customerLookupTitle')}</h3>
         <p className={css.hint}>{t('customerLookupHint')}</p>
-        <CustomerPicker
-          selected={[]}
-          multiple={false}
-          onChange={([customer]) => customer && onOpenCustomer(customer.id)}
-        />
+        <CustomerSearch onPick={customer => onOpenCustomer(customer.id)} />
       </section>
     </div>
   );

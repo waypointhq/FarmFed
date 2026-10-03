@@ -35,15 +35,13 @@ export const expiresLabel = (promo, t) =>
   promo.endsAt ? formatPromoDate(promo.endsAt) : t('never');
 
 /**
- * Search customers by name or email and pick one or more.
+ * Search customers by name or email and pick one.
  *
  * @param {Object} props
- * @param {Array} props.selected [{ id, name, email }]
- * @param {Function} props.onChange called with the new selection
- * @param {boolean} [props.multiple]
+ * @param {Function} props.onPick called with the chosen { id, name, email }
  */
-export const CustomerPicker = props => {
-  const { selected, onChange, multiple = true, inputId } = props;
+export const CustomerSearch = props => {
+  const { onPick } = props;
   const t = usePromoT();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -66,48 +64,22 @@ export const CustomerPicker = props => {
     return () => clearTimeout(timer.current);
   }, [query]);
 
-  const pick = customer => {
-    const next = multiple ? [...selected.filter(c => c.id !== customer.id), customer] : [customer];
-    onChange(next);
-    setQuery('');
-    setResults([]);
-  };
-
-  const remaining = results.filter(r => !selected.some(s => s.id === r.id));
-
   return (
     <div>
-      {selected.length > 0 && multiple ? (
-        <div className={classNames(css.chips, css.chipsSpaced)}>
-          {selected.map(c => (
-            <span key={c.id} className={css.chip}>
-              {c.name || c.email}
-              <button
-                type="button"
-                className={css.chipRemove}
-                onClick={() => onChange(selected.filter(s => s.id !== c.id))}
-                aria-label={t('removeCustomer', { name: c.name || c.email })}
-              >
-                ×
-              </button>
-            </span>
-          ))}
-        </div>
-      ) : null}
       <input
-        id={inputId}
         className={css.input}
         value={query}
         onChange={e => setQuery(e.target.value)}
         placeholder={t('customerSearchPlaceholder')}
+        aria-label={t('customerSearchPlaceholder')}
         autoComplete="off"
       />
       {searching ? <p className={css.hint}>{t('searching')}</p> : null}
-      {remaining.length > 0 ? (
+      {results.length > 0 ? (
         <ul className={css.results}>
-          {remaining.map(c => (
+          {results.map(c => (
             <li key={c.id}>
-              <button type="button" className={css.result} onClick={() => pick(c)}>
+              <button type="button" className={css.result} onClick={() => onPick(c)}>
                 <span className={css.resultName}>{c.name || t('unnamedCustomer')}</span>
                 <span className={css.resultEmail}>{c.email}</span>
               </button>

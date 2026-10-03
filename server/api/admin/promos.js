@@ -3,7 +3,7 @@ const { getSdk, getIntegrationSdk, handleError } = require('../../api-util/sdk')
 const { isAdminUser } = require('../../api-util/admin');
 const { isEmailConfigured } = require('../../api-util/email');
 const promos = require('../../api-util/promos');
-const { sendGiftEmail, sendGiftNotification } = require('../../api-util/promoNotify');
+const { sendGiftEmails, sendGiftNotifications } = require('../../api-util/promoNotify');
 
 /**
  * Admin Promotions: create and manage free-delivery promos, gift them to
@@ -11,6 +11,7 @@ const { sendGiftEmail, sendGiftNotification } = require('../../api-util/promoNot
  */
 
 const DEFAULT_GIFT_DAYS = 30;
+const MAX_GIFT_RECIPIENTS = 1000;
 
 const requireAdmin = async (req, res) => {
   const response = await getSdk(req, res).currentUser.show({ include: [] });
@@ -40,14 +41,20 @@ const adminHandler = fn => async (req, res) => {
   }
 };
 
+// Marketplaces label buyers differently; anything else is a vendor (same
+// rule as admin/list-vendors).
+const CUSTOMER_TYPES = ['consumer', 'customer', 'buyer'];
+
 const userSummary = user => {
   const profile = user.attributes?.profile || {};
+  const userType = profile.publicData?.userType || null;
   return {
     id: user.id.uuid,
     name:
       profile.displayName || [profile.firstName, profile.lastName].filter(Boolean).join(' ') || '',
     email: user.attributes?.email || '',
-    userType: profile.publicData?.userType || null,
+    userType,
+    kind: CUSTOMER_TYPES.includes(String(userType || '').toLowerCase()) ? 'customer' : 'vendor',
   };
 };
 
@@ -64,9 +71,9 @@ const allUsers = async () => {
   while (true) {
     const response = await integrationSdk.users.query({ perPage: 100, page });
     const batch = response.data.data || [];
-    batch
-      .filter(u => !['banned', 'deleted'].includes(u.attributes?.state))
-      .forEach(u => users.push(userSummary(u)));
+    // Only people who can actually shop: not pending approval, banned or
+    // deleted.
+    batch.filter(u => u.attributes?.state === 'active').forEach(u => users.push(userSummary(u)));
     const totalPages = response.data.meta?.totalPages || 1;
     if (page >= totalPages || batch.length === 0) break;
     page += 1;
@@ -181,6 +188,11 @@ const gift = adminHandler(async (req, res, admin) => {
   if (!Array.isArray(userIds) || userIds.length === 0) {
     return res.status(400).json({ error: 'Pick at least one customer.' });
   }
+  if (userIds.length > MAX_GIFT_RECIPIENTS) {
+    return res
+      .status(400)
+      .json({ error: `Gift up to ${MAX_GIFT_RECIPIENTS} customers at a time.` });
+  }
   const isNewPersonal = !promoId || promoId === 'new';
   const existing = isNewPersonal ? null : await promos.getPromoOrThrow(promoId);
   if (existing && ![promos.STATE_ACTIVE].includes(existing.state)) {
@@ -196,50 +208,83 @@ const gift = adminHandler(async (req, res, admin) => {
           .format('YYYY-MM-DD')
       : expiresAt || null;
 
+  // Everything below works in batches (one email request per 100, one
+  // notification write, one push batch) so a whole-list gift finishes well
+  // inside Heroku's 30-second request limit.
+  const known = new Map((await allUsers()).map(u => [u.id, u]));
   const integrationSdk = getIntegrationSdk();
-  const sdk = getSdk(req, res);
-  const results = [];
-  for (const userId of userIds) {
-    const userResponse = await integrationSdk.users.show({ id: userId });
-    const user = userSummary(userResponse.data.data);
+  const users = [];
+  for (const userId of [...new Set(userIds)]) {
+    if (known.has(userId)) {
+      users.push(known.get(userId));
+    } else {
+      const userResponse = await integrationSdk.users.show({ id: userId });
+      users.push(userSummary(userResponse.data.data));
+    }
+  }
 
-    const promo =
-      existing ||
-      (await promos.createPersonalPromo({
+  // One customer gets a personal code; a group shares one gifted-only code.
+  const promo =
+    existing ||
+    (users.length === 1
+      ? await promos.createPersonalPromo({
+          user: users[0],
+          uses,
+          expiresAt: giftExpiry,
+          message,
+          createdBy: admin.name,
+        })
+      : await promos.createGroupGiftPromo({
+          count: users.length,
+          uses,
+          expiresAt: giftExpiry,
+          message,
+          createdBy: admin.name,
+        }));
+
+  const gifts = [];
+  for (const user of users) {
+    gifts.push(
+      await promos.giftPromo({
+        promo,
         user,
         uses,
         expiresAt: giftExpiry,
         message,
-        createdBy: admin.name,
-      }));
-    let giftRecord = await promos.giftPromo({
-      promo,
-      user,
-      uses,
-      expiresAt: giftExpiry,
-      message,
-      note,
-      giftedBy: admin.name,
-    });
+        note,
+        giftedBy: admin.name,
+      })
+    );
+  }
 
-    const emailSent = sendEmail
-      ? await sendGiftEmail({ sdk, to: user.email, promo, gift: giftRecord })
-      : false;
-    const notificationSent = sendNotification
-      ? await sendGiftNotification({ userId, promo }).catch(e => {
-          console.error('[admin/promos] notification failed:', e.message);
-          return false;
-        })
-      : false;
-    giftRecord = await promos.updateGift(promo.id, userId, { emailSent, notificationSent });
+  const emailSent = sendEmail
+    ? await sendGiftEmails({
+        sdk: getSdk(req, res),
+        promo,
+        recipients: users.map((user, i) => ({
+          userId: user.id,
+          email: user.email,
+          gift: gifts[i],
+        })),
+      })
+    : {};
+  const notificationSent = sendNotification
+    ? await sendGiftNotifications({ userIds: users.map(u => u.id), promo }).catch(e => {
+        console.error('[admin/promos] notifications failed:', e.message);
+        return false;
+      })
+    : false;
 
+  const results = [];
+  for (const user of users) {
+    const sent = { emailSent: !!emailSent[user.id], notificationSent: !!notificationSent };
+    await promos.updateGift(promo.id, user.id, sent);
     results.push({
-      userId,
+      userId: user.id,
       name: user.name,
       promoId: promo.id,
       code: promo.code,
-      emailSent,
-      notificationSent,
+      ...sent,
     });
   }
   res.status(200).json({ results, emailConfigured: isEmailConfigured() });
@@ -258,8 +303,16 @@ const revoke = adminHandler(async (req, res) => {
 
 /**
  * GET /api/admin/customers?q= — search customers by name or email.
+ * GET /api/admin/customers?all=1 — everyone who can shop, with their type,
+ * for picking many at once.
  */
 const searchCustomers = adminHandler(async (req, res) => {
+  if (req.query.all === '1') {
+    const customers = [...(await allUsers())].sort((a, b) =>
+      (a.name || a.email).localeCompare(b.name || b.email)
+    );
+    return res.status(200).json({ customers });
+  }
   const q = String(req.query.q || '')
     .trim()
     .toLowerCase();

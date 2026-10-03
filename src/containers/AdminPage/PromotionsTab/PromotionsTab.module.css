@@ -344,6 +344,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
+  margin-bottom: 14px;
 
   @media (--viewportSmall) {
     grid-template-columns: 1fr 1fr;
@@ -559,39 +560,6 @@
   color: var(--colorGrey900);
 }
 
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.chipsSpaced {
-  margin-bottom: 8px;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 6px 4px 10px;
-  border-radius: 999px;
-  background-color: var(--colorSuccessSubtle);
-  border: 1px solid var(--marketplaceColor);
-  font-size: 13px;
-}
-
-.chipRemove {
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: none;
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
-}
-
 .results {
   margin: 4px 0 0;
   padding: 0;
@@ -656,4 +624,80 @@
   color: var(--colorWhite);
   font-size: 14px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* ================= Customer multi-select ================= */
+
+.multiSelect {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selectBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.selectCount {
+  font-size: 13px;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorGrey700);
+}
+
+.peopleList {
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 6px;
+  list-style: none;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--colorGrey50);
+  cursor: pointer;
+
+  & input {
+    width: auto;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background-color: var(--colorGrey50);
+  }
+}
+
+.personSelected {
+  background-color: var(--colorSuccessSubtle);
+}
+
+.personText {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+
+  & span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.personType {
+  flex-shrink: 0;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background-color: var(--colorGrey50);
+  font-size: 11px;
+  color: var(--colorGrey600);
 }

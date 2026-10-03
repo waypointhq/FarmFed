@@ -654,5 +654,6 @@ export const adminRevokePromoGift = (id, userId) =>
 export const adminGiftPromo = body => jsonRequest('/api/admin/promos/gift', 'POST', body);
 export const adminSearchCustomers = q =>
   jsonRequest(`/api/admin/customers?q=${encodeURIComponent(q)}`);
+export const adminFetchAllCustomers = () => jsonRequest('/api/admin/customers?all=1');
 export const adminFetchCustomerPromos = userId =>
   jsonRequest(`/api/admin/customers/${encodeURIComponent(userId)}/promos`);

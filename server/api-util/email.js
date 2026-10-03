@@ -13,6 +13,9 @@
  */
 
 const RESEND_URL = 'https://api.resend.com/emails';
+const RESEND_BATCH_URL = 'https://api.resend.com/emails/batch';
+// Resend's batch endpoint takes up to 100 messages per call.
+const BATCH_SIZE = 100;
 const DEFAULT_FROM = 'Farm Fed <hello@farmfed.com>';
 
 const isEmailConfigured = () => !!process.env.RESEND_API_KEY;
@@ -58,6 +61,53 @@ const sendEmail = async ({ to, subject, html, text }) => {
   }
 };
 
+/**
+ * Send many emails in as few requests as possible (Resend rate-limits
+ * individual sends to a couple per second). A batch succeeds or fails as a
+ * whole.
+ *
+ * @param {Array<{ to, subject, html, text }>} messages
+ * @returns {Promise<boolean[]>} whether each message went out, in order
+ */
+const sendEmailBatch = async messages => {
+  if (!isEmailConfigured()) return messages.map(() => false);
+  const from = process.env.EMAIL_FROM || DEFAULT_FROM;
+  const replyTo = process.env.EMAIL_REPLY_TO;
+  const results = [];
+  for (let i = 0; i < messages.length; i += BATCH_SIZE) {
+    const chunk = messages.slice(i, i + BATCH_SIZE);
+    let sent = false;
+    try {
+      const response = await fetch(RESEND_BATCH_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(
+          chunk.map(({ to, subject, html, text }) => ({
+            from,
+            to: Array.isArray(to) ? to : [to],
+            subject,
+            html,
+            text,
+            ...(replyTo ? { reply_to: replyTo } : {}),
+          }))
+        ),
+      });
+      sent = response.ok;
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        console.error('[email] Resend rejected the batch:', response.status, body?.message);
+      }
+    } catch (e) {
+      console.error('[email] batch send failed:', e.message);
+    }
+    results.push(...chunk.map(() => sent));
+  }
+  return results;
+};
+
 const escapeHtml = value =>
   String(value == null ? '' : value)
     .replace(/&/g, '&amp;')
@@ -66,4 +116,4 @@ const escapeHtml = value =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
-module.exports = { sendEmail, isEmailConfigured, escapeHtml };
+module.exports = { sendEmail, sendEmailBatch, isEmailConfigured, escapeHtml };

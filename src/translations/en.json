@@ -1866,7 +1866,6 @@
   "AdminPage.promos.searching": "Searching…",
   "AdminPage.promos.noCustomers": "No customers found.",
   "AdminPage.promos.unnamedCustomer": "Customer",
-  "AdminPage.promos.removeCustomer": "Remove {name}",
   "AdminPage.promos.backToList": "All promos",
   "AdminPage.promos.backToPromo": "Back to promo",
   "AdminPage.promos.createTitle": "Create promo",
@@ -2007,5 +2006,16 @@
   "Promo.reason.outside-zone": "We don't deliver to this address yet, so the promo can't be used here.",
   "Promo.reason.unavailable": "We couldn't check your promo just now. Please try again.",
   "TopbarDesktop.myPromosLink": "My Promos",
-  "TopbarMobileMenu.myPromosLink": "My Promos"
+  "TopbarMobileMenu.myPromosLink": "My Promos",
+  "AdminPage.promos.gift.typeFilter": "Filter by type",
+  "AdminPage.promos.gift.kind.all": "All",
+  "AdminPage.promos.gift.kind.customer": "Customers",
+  "AdminPage.promos.gift.kind.vendor": "Vendors",
+  "AdminPage.promos.gift.selectAllShown": "Select all shown ({count})",
+  "AdminPage.promos.gift.selectedCount": "{count} selected",
+  "AdminPage.promos.gift.clear": "Clear",
+  "AdminPage.promos.gift.newGroup": "New gift promo (one shared code)",
+  "AdminPage.promos.gift.newGroupHint": "Creates one code only these customers can use, with their own free deliveries each.",
+  "AdminPage.promos.gift.sendTo": "Send Gift to {count} customers",
+  "AdminPage.promos.gift.confirmMany": "Send free delivery to {count} customers? Each gets the email and notification right away."
 }

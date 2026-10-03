@@ -27,6 +27,18 @@ const addNotification = notification => {
   return setNotifications(notifications);
 };
 
+// Several at once, in one write (e.g. a promo gifted to many customers).
+const addNotifications = list => {
+  const createdAt = new Date().toISOString();
+  const added = list.map(notification => ({
+    ...notification,
+    id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    createdAt,
+    read: false,
+  }));
+  return setNotifications([...getNotifications(), ...added]);
+};
+
 const getNotificationsForUser = userId => {
   return getNotifications().filter(n => n.userId === userId);
 };
@@ -39,4 +51,11 @@ const markReadForUser = userId => {
   return setNotifications(updated);
 };
 
-module.exports = { getNotifications, setNotifications, addNotification, getNotificationsForUser, markReadForUser };
+module.exports = {
+  getNotifications,
+  setNotifications,
+  addNotification,
+  addNotifications,
+  getNotificationsForUser,
+  markReadForUser,
+};

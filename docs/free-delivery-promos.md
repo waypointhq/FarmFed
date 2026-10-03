@@ -49,6 +49,13 @@ charging the delivery: item prices and vendor payouts don't change.
   Used promos can be archived but not deleted.
 - An unused gift can be revoked; it disappears from the customer's promos
   quietly.
+- Gifting one person with "New personal promo" makes a code just for them.
+  Gifting several makes one gifted-only code they share, each with their own
+  number of free deliveries. The gift window lists everyone who can shop,
+  filtered by Customers / Vendors, with "Select all shown".
+- Gifts to many people go out in batches (Resend's batch API, 100 emails per
+  call; one notification write; one push batch), so a whole-list gift stays
+  inside Heroku's 30-second request limit. Up to 1,000 people per gift.
 
 ## 3. Where things live
 

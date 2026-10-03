@@ -2,12 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { adminFetchPromos, adminGiftPromo } from '../../../util/api';
 import { centralDatePlusDays } from '../../../util/promos';
-import { CustomerPicker, usePromoT } from './shared';
+import { usePromoT } from './shared';
+import CustomerMultiSelect from './CustomerMultiSelect';
 
 import css from './PromotionsTab.module.css';
 
 const NEW_PERSONAL = 'new';
 const DEFAULT_EXPIRY_DAYS = 30;
+// Ask before sending to this many people or more.
+const CONFIRM_FROM = 10;
 
 /**
  * The Gift Free Delivery window. Opened from a promo (customers to pick) or
@@ -71,6 +74,12 @@ const GiftModal = props => {
       setError(t('gift.pickCustomer'));
       return;
     }
+    if (
+      customers.length >= CONFIRM_FROM &&
+      !window.confirm(t('gift.confirmMany', { count: customers.length }))
+    ) {
+      return;
+    }
     setSending(true);
     setError(null);
     adminGiftPromo({
@@ -108,10 +117,8 @@ const GiftModal = props => {
         </h2>
 
         <div className={css.field}>
-          <label className={css.label} htmlFor="gift-customers">
-            {t('gift.customers')}
-          </label>
-          <CustomerPicker inputId="gift-customers" selected={customers} onChange={setCustomers} />
+          <span className={css.label}>{t('gift.customers')}</span>
+          <CustomerMultiSelect selected={customers} onChange={setCustomers} />
         </div>
 
         <div className={css.field}>
@@ -124,7 +131,9 @@ const GiftModal = props => {
             value={values.promoId}
             onChange={set('promoId')}
           >
-            <option value={NEW_PERSONAL}>{t('gift.newPersonal')}</option>
+            <option value={NEW_PERSONAL}>
+              {customers.length > 1 ? t('gift.newGroup') : t('gift.newPersonal')}
+            </option>
             {activePromos.map(p => (
               <option key={p.id} value={p.id}>
                 {p.code}
@@ -133,7 +142,9 @@ const GiftModal = props => {
             ))}
           </select>
           {values.promoId === NEW_PERSONAL ? (
-            <span className={css.hint}>{t('gift.newPersonalHint')}</span>
+            <span className={css.hint}>
+              {customers.length > 1 ? t('gift.newGroupHint') : t('gift.newPersonalHint')}
+            </span>
           ) : null}
         </div>
 
@@ -222,7 +233,11 @@ const GiftModal = props => {
             {t('cancel')}
           </button>
           <button type="submit" className={css.primaryButton} disabled={sending}>
-            {sending ? t('gift.sending') : t('gift.send')}
+            {sending
+              ? t('gift.sending')
+              : customers.length > 1
+              ? t('gift.sendTo', { count: customers.length })
+              : t('gift.send')}
           </button>
         </div>
       </form>

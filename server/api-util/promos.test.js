@@ -317,6 +317,24 @@ describe('gifts', () => {
     expect((await redeemFor('FREESAT', 'u1')).reason).toBe('expired');
   });
 
+  it('shares one gifted-only code across a group gift', async () => {
+    const promo = await promos.createGroupGiftPromo({ count: 2, uses: 1, expiresAt: inDays(30) });
+    expect(promo).toMatchObject({ audience: 'gifted', personal: false, state: 'active' });
+    for (const id of ['u1', 'u2']) {
+      await promos.giftPromo({ promo, user: { id }, uses: 1, expiresAt: inDays(30) });
+    }
+
+    expect((await redeemFor(promo.code, 'u1')).ok).toBe(true);
+    expect((await redeemFor(promo.code, 'u1')).reason).toBe('already-used');
+    expect((await redeemFor(promo.code, 'u2')).ok).toBe(true);
+    expect((await redeemFor(promo.code, 'u3')).reason).toBe('not-yours');
+
+    // Revoking one person's gift leaves the shared code working for others.
+    await promos.giftPromo({ promo, user: { id: 'u4' }, uses: 1 });
+    await promos.revokeGift(promo.id, 'u4');
+    expect((await store.getPromo(promo.id)).state).toBe('active');
+  });
+
   it('creates a one-time personal code', async () => {
     const promo = await promos.createPersonalPromo({
       user: { id: 'u1', name: 'Sarah M' },

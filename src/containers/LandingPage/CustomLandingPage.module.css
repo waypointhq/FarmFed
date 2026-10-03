@@ -55,7 +55,8 @@
   display: inline-block;
   padding: 14px 36px;
   border-radius: var(--borderRadiusMedium, 6px);
-  background-color: var(--marketplaceColor);
+  /* Farm brown, per client request. */
+  background-color: #453317;
   color: var(--colorWhite);
   font-weight: var(--fontWeightSemiBold, 600);
   font-size: 18px;
@@ -64,9 +65,26 @@
 }
 
 .heroButton:hover {
-  background-color: var(--marketplaceColorDark, var(--marketplaceColor));
+  background-color: #33250f;
+  color: var(--colorWhite);
   text-decoration: none;
   transform: translateY(-1px);
+}
+
+/* Wilson County graphic, pinned to the hero's bottom-left corner. */
+.serviceArea {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  width: 150px;
+  height: auto;
+  pointer-events: none;
+
+  @media (--viewportMedium) {
+    left: 40px;
+    bottom: 32px;
+    width: 260px;
+  }
 }
 
 /* ================= (b) Trust badges ================= */

@@ -685,6 +685,7 @@
   "LandingPage.heroTitle": "Fresh from the Farm\nAt your door",
   "LandingPage.schemaDescription": "An online marketplace.",
   "LandingPage.schemaTitle": "{marketplaceName}",
+  "LandingPage.serviceAreaAlt": "Now delivering in Wilson County, Tennessee",
   "LandingPage.viewAll": "View all",
   "LayoutSideNavigation.screenreader.accountNavigation": "Account settings navigation",
   "LayoutWrapperAccountSettingsSideNav.contactDetailsTabTitle": "Contact details",

@@ -1,9 +1,10 @@
 import React from 'react';
 import { array, bool } from 'prop-types';
 
-import { FormattedMessage } from '../../util/reactIntl';
+import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { NamedLink, ListingCard, IconSpinner } from '../../components';
 
+import serviceAreaImage from '../../assets/wilson-county-tn.webp';
 import css from './CustomLandingPage.module.css';
 
 // Inline icons keep this marketing page self-contained. They inherit `color`
@@ -83,6 +84,7 @@ const TRUST_BADGES = [
  */
 const CustomLandingPage = props => {
   const { featuredListings = [], inProgress = false } = props;
+  const intl = useIntl();
 
   return (
     <div className={css.root}>
@@ -96,6 +98,12 @@ const CustomLandingPage = props => {
             <FormattedMessage id="LandingPage.heroCta" />
           </NamedLink>
         </div>
+        {/* Service-area badge answers "do they deliver to me?" at a glance. */}
+        <img
+          className={css.serviceArea}
+          src={serviceAreaImage}
+          alt={intl.formatMessage({ id: 'LandingPage.serviceAreaAlt' })}
+        />
       </section>
 
       {/* (b) Trust badges */}

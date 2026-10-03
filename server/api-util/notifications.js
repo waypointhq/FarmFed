@@ -1,21 +1,20 @@
-const fs = require('fs');
-const path = require('path');
+const settingsStore = require('./settingsStore');
 
-const DATA_PATH = path.resolve(__dirname, '../data/notifications.json');
+// In-app notifications (the bell). Kept in settingsStore so they survive a
+// Heroku restart: Redis in production, server/data/notifications.json locally.
+const NAMESPACE = 'notifications';
+// Oldest entries drop off past this, so the stored value stays small.
+const MAX_NOTIFICATIONS = 2000;
 
 const getNotifications = () => {
-  try {
-    const data = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
-    return Array.isArray(data.notifications) ? data.notifications : [];
-  } catch (e) {
-    return [];
-  }
+  const data = settingsStore.get(NAMESPACE);
+  return Array.isArray(data?.notifications) ? data.notifications : [];
 };
 
-const setNotifications = notifications => {
-  const data = { notifications: notifications || [] };
-  fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2), 'utf8');
-};
+const setNotifications = notifications =>
+  settingsStore.set(NAMESPACE, {
+    notifications: (notifications || []).slice(-MAX_NOTIFICATIONS),
+  });
 
 const addNotification = notification => {
   const notifications = getNotifications();
@@ -25,7 +24,7 @@ const addNotification = notification => {
     createdAt: new Date().toISOString(),
     read: false,
   });
-  setNotifications(notifications);
+  return setNotifications(notifications);
 };
 
 const getNotificationsForUser = userId => {
@@ -37,7 +36,7 @@ const markReadForUser = userId => {
   const updated = notifications.map(n =>
     n.userId === userId ? { ...n, read: true } : n
   );
-  setNotifications(updated);
+  return setNotifications(updated);
 };
 
 module.exports = { getNotifications, setNotifications, addNotification, getNotificationsForUser, markReadForUser };

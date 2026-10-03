@@ -59,7 +59,14 @@ const InboxLink = ({ notificationCount, inboxTab }) => {
   );
 };
 
-const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLink, intl }) => {
+const ProfileMenu = ({
+  currentPage,
+  currentUser,
+  onLogout,
+  showManageListingsLink,
+  promoUnseenCount = 0,
+  intl,
+}) => {
   const currentPageClass = page => {
     const isAccountSettingsPage =
       page === 'AccountSettingsPage' && ACCOUNT_SETTINGS_PAGES.includes(currentPage);
@@ -75,6 +82,7 @@ const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLin
         ariaLabel={intl.formatMessage({ id: 'TopbarDesktop.screenreader.profileMenu' })}
       >
         <Avatar className={css.avatar} user={currentUser} disableProfileLink />
+        {promoUnseenCount > 0 ? <span className={css.avatarDot} /> : null}
       </MenuLabel>
       <MenuContent className={css.profileMenuContent}>
         {showManageListingsLink ? (
@@ -119,6 +127,16 @@ const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLin
             </NamedLink>
           </MenuItem>
         ) : null}
+        <MenuItem key="MyPromosPage">
+          <NamedLink
+            className={classNames(css.menuLink, currentPageClass('MyPromosPage'))}
+            name="MyPromosPage"
+          >
+            <span className={css.menuItemBorder} />
+            <FormattedMessage id="TopbarDesktop.myPromosLink" />
+            {promoUnseenCount > 0 ? <span className={css.menuItemDot} /> : null}
+          </NamedLink>
+        </MenuItem>
         <MenuItem key="ProfileSettingsPage">
           <NamedLink
             className={classNames(css.menuLink, currentPageClass('ProfileSettingsPage'))}
@@ -178,6 +196,7 @@ const TopbarDesktop = props => {
     currentPage,
     rootClassName,
     notificationCount = 0,
+    promoUnseenCount = 0,
     intl,
     isAuthenticated,
     onLogout,
@@ -212,6 +231,7 @@ const TopbarDesktop = props => {
       currentUser={currentUser}
       onLogout={onLogout}
       showManageListingsLink={showCreateListingsLink}
+      promoUnseenCount={promoUnseenCount}
       intl={intl}
     />
   ) : null;

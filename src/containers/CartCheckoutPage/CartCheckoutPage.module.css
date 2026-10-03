@@ -544,3 +544,139 @@
     text-decoration: underline;
   }
 }
+
+/* Free-delivery promo */
+.promoBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background-color: var(--colorSuccessSubtle);
+  border: 1px solid var(--marketplaceColor);
+}
+
+.promoBannerText {
+  font-size: 14px;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorGrey900);
+}
+
+.promoBannerApply,
+.promoApplyButton {
+  flex-shrink: 0;
+  padding: 6px 16px;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--colorPrimaryButton);
+  color: var(--colorWhite);
+  font-size: 14px;
+  font-weight: var(--fontWeightSemiBold);
+  cursor: pointer;
+  transition: var(--transitionStyleButton);
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.promoRow {
+  padding-top: 10px;
+}
+
+.promoLink {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--marketplaceColor);
+  font-size: 14px;
+  font-weight: var(--fontWeightMedium);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.promoField {
+  display: flex;
+  gap: 8px;
+}
+
+.promoInput {
+  flex: 1;
+  min-width: 0;
+  height: 38px;
+  padding: 0 10px;
+  font-size: 15px;
+  text-transform: uppercase;
+}
+
+.promoTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px 4px 10px;
+  border-radius: 999px;
+  background-color: var(--colorSuccessSubtle);
+  border: 1px solid var(--marketplaceColor);
+  font-size: 13px;
+  color: var(--colorGrey900);
+}
+
+.promoTagCode {
+  font-weight: var(--fontWeightBold);
+  letter-spacing: 0.5px;
+}
+
+.promoTagTitle {
+  color: var(--colorGrey700);
+}
+
+.promoTagRemove {
+  width: 22px;
+  height: 22px;
+  margin-left: 4px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--colorGrey600);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--colorGrey100);
+  }
+}
+
+.promoError {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--colorFail);
+}
+
+.promoInfo {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--colorGrey700);
+}
+
+.promoStruck {
+  color: var(--colorGrey400);
+  font-weight: var(--fontWeightRegular);
+}
+
+.promoFree {
+  color: var(--marketplaceColor);
+  font-weight: var(--fontWeightBold);
+}
+
+.promoSavings {
+  margin: 4px 0 0;
+  text-align: right;
+  font-size: 14px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--marketplaceColor);
+}

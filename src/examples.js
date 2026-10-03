@@ -61,6 +61,7 @@ import * as IconSynchronize from './components/IconSynchronize/IconSynchronize.e
 import * as Logo from './components/Logo/Logo.example';
 import * as LinkedLogo from './components/Logo/LinkedLogo.example';
 import * as ListingCard from './components/ListingCard/ListingCard.example';
+import * as PromoCard from './components/PromoCard/PromoCard.example';
 import * as LocationAutocompleteInput from './components/LocationAutocompleteInput/LocationAutocompleteInput.example';
 import * as Map from './components/Map/Map.example';
 import * as Menu from './components/Menu/Menu.example';
@@ -123,6 +124,7 @@ import * as UserCard from './containers/ListingPage/UserCard/UserCard.example';
 import * as PasswordRecoveryForm from './containers/PasswordRecoveryPage/PasswordRecoveryForm/PasswordRecoveryForm.example';
 import * as PasswordResetForm from './containers/PasswordResetPage/PasswordResetForm/PasswordResetForm.example';
 import * as ManageListingCard from './containers/ManageListingsPage/ManageListingCard/ManageListingCard.example';
+import * as CheckoutPromo from './containers/CartCheckoutPage/CheckoutPromo.example';
 import * as InboxPage from './containers/InboxPage/InboxPage.example';
 
 // containers
@@ -209,11 +211,13 @@ export {
   LayoutComposer,
   LinkedLogo,
   ListingCard,
+  PromoCard,
   ListingImageGallery,
   LocationAutocompleteInput,
   LoginForm,
   Logo,
   ManageListingCard,
+  CheckoutPromo,
   Map,
   Markdown,
   Menu,

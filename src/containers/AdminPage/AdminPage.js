@@ -47,6 +47,7 @@ import TaxSettingsTab from './TaxSettingsTab/TaxSettingsTab';
 import ListingShuffleTab from './ListingShuffleTab/ListingShuffleTab';
 import BulletinBoardTab from './BulletinBoardTab/BulletinBoardTab';
 import CheckoutFailuresTab from './CheckoutFailuresTab/CheckoutFailuresTab';
+import PromotionsTab from './PromotionsTab/PromotionsTab';
 
 import css from './AdminPage.module.css';
 
@@ -54,6 +55,7 @@ const DELIVERY_TAB = 'delivery';
 const GEOFENCE_TAB = 'geofence';
 const USERS_TAB = 'users';
 const ORDERS_TAB = 'orders';
+const PROMOTIONS_TAB = 'promotions';
 const PUSH_TAB = 'push';
 const PICKUP_TAB = 'pickup';
 const TAX_TAB = 'tax';
@@ -168,6 +170,7 @@ const AdminPageComponent = props => {
     { id: GEOFENCE_TAB, label: 'AdminPage.geofenceTab', show: true },
     { id: USERS_TAB, label: 'AdminPage.usersTab', show: true },
     { id: ORDERS_TAB, label: 'AdminPage.ordersTab', show: true },
+    { id: PROMOTIONS_TAB, label: 'AdminPage.promotionsTab', show: true },
     { id: PUSH_TAB, label: 'AdminPage.pushTab', show: true },
     { id: PICKUP_TAB, label: 'AdminPage.pickupTab', show: flags.pickupSchedule },
     { id: TAX_TAB, label: 'AdminPage.taxTab', show: flags.taxBreakdown },
@@ -300,6 +303,8 @@ const AdminPageComponent = props => {
             )}
 
             {activeTab === CHECKOUT_FAILURES_TAB && <CheckoutFailuresTab />}
+
+            {activeTab === PROMOTIONS_TAB && <PromotionsTab />}
 
             {activeTab === BULLETIN_TAB && flags.vendorBulletin && (
               <BulletinBoardTab

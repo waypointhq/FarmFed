@@ -1,6 +1,7 @@
 const { getSdk, getIntegrationSdk, handleError } = require('../api-util/sdk');
 const { getCheckoutFailures, recordCheckoutFailure } = require('../api-util/checkoutFailures');
 const { isAdminUser } = require('../api-util/admin');
+const { releaseIfCheckoutFailed } = require('../api-util/promos');
 
 // Refunds a paid-for item and releases its stock. The operator has no
 // refunding transition out of `pending-acceptance` — only the provider or the
@@ -20,10 +21,13 @@ const REFUND_TRANSITION = 'transition/decline-order';
  *     checkout leaves no order, no email and no trace — the only other signal
  *     is the customer getting in touch.
  *
- * Body: { orderGroupId, reason, itemCount, chargedOrderIds: string[] }
+ * A free-delivery promo counted for this checkout is given back too.
+ *
+ * Body: { orderGroupId, reason, itemCount, chargedOrderIds: string[], promoRedemptionId? }
  */
 const postHandler = async (req, res) => {
-  const { orderGroupId, reason, itemCount, chargedOrderIds = [] } = req.body || {};
+  const { orderGroupId, reason, itemCount, chargedOrderIds = [], promoRedemptionId } =
+    req.body || {};
 
   try {
     const sdk = getSdk(req, res);
@@ -32,13 +36,29 @@ const postHandler = async (req, res) => {
 
     const refunded = [];
     const refundFailed = [];
+    const integrationSdk = getIntegrationSdk();
+    const currentUserId = currentUser?.id?.uuid;
 
     if (chargedOrderIds.length > 0) {
-      const integrationSdk = getIntegrationSdk();
       // Sequential: each refund is a separate charge reversal, and one failing
       // must not prevent the rest from being attempted.
       for (const id of chargedOrderIds) {
         try {
+          // The ids come from the browser, and the Integration API can decline
+          // anyone's order: only touch this customer's orders from this
+          // checkout.
+          const txResponse = await integrationSdk.transactions.show({
+            id,
+            include: ['customer'],
+          });
+          const tx = txResponse.data.data;
+          const isOwnOrder = tx.relationships?.customer?.data?.id?.uuid === currentUserId;
+          const isThisCheckout = tx.attributes.protectedData?.orderGroupId === orderGroupId;
+          if (!isOwnOrder || !isThisCheckout) {
+            console.error('[checkout-failures] refused to refund', id, 'for', currentUserId);
+            refundFailed.push(id);
+            continue;
+          }
           await integrationSdk.transactions.transition({
             id,
             transition: REFUND_TRANSITION,
@@ -50,6 +70,15 @@ const postHandler = async (req, res) => {
           refundFailed.push(id);
         }
       }
+    }
+
+    // Hand the promo use back only if nothing paid is left in the order;
+    // otherwise reconciliation settles it.
+    if (promoRedemptionId) {
+      await releaseIfCheckoutFailed(promoRedemptionId, {
+        userId: currentUserId,
+        integrationSdk,
+      }).catch(e => console.error('[checkout-failures] promo release failed:', e.message));
     }
 
     await recordCheckoutFailure({

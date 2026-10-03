@@ -23,6 +23,7 @@ import {
 } from '../../../components';
 import { getSearchPageResourceLocatorStringParams } from '../../SearchPage/SearchPage.shared';
 
+import usePromoBadge from '../../../util/usePromoBadge';
 import MenuIcon from './MenuIcon';
 import TopbarSearchForm from './TopbarSearchForm/TopbarSearchForm';
 import TopbarMobileMenu from './TopbarMobileMenu/TopbarMobileMenu';
@@ -401,7 +402,10 @@ const TopbarComponent = props => {
   const customLinks = getResolvedCustomLinks(sortedCustomLinks, routeConfiguration);
   const resolvedCurrentPage = currentPage || getResolvedCurrentPage(location, routeConfiguration);
 
-  const notificationDot = notificationCount > 0 ? <div className={css.notificationDot} /> : null;
+  // A gifted promo the customer hasn't seen also earns the menu a dot.
+  const promoUnseenCount = usePromoBadge(isAuthenticated);
+  const notificationDot =
+    notificationCount > 0 || promoUnseenCount > 0 ? <div className={css.notificationDot} /> : null;
 
   const hasMatchMedia = typeof window !== 'undefined' && window?.matchMedia;
   const isMobileLayout = hasMatchMedia
@@ -415,6 +419,7 @@ const TopbarComponent = props => {
       currentUser={currentUser}
       onLogout={handleLogout}
       notificationCount={notificationCount}
+      promoUnseenCount={promoUnseenCount}
       currentPage={resolvedCurrentPage}
       customLinks={customLinks}
       showCreateListingsLink={showCreateListingsLink}
@@ -540,6 +545,7 @@ const TopbarComponent = props => {
           intl={intl}
           isAuthenticated={isAuthenticated}
           notificationCount={notificationCount}
+          promoUnseenCount={promoUnseenCount}
           onLogout={handleLogout}
           onSearchSubmit={handleSubmit}
           config={config}

@@ -2,6 +2,7 @@ const { getSdk, getIntegrationSdk, handleError } = require('../api-util/sdk');
 const { getTokensForUser } = require('../api-util/deviceTokens');
 const { sendPushNotifications } = require('../api-util/pushSender');
 const { reconcileAllOpenDeliveries } = require('../api-util/deliveryReconcile');
+const { reconcileAllRedemptions } = require('../api-util/promos');
 
 /**
  * Push notification templates per transition. Each entry decides who gets
@@ -91,6 +92,24 @@ module.exports = async (req, res) => {
     }
 
     const integrationSdk = getIntegrationSdk();
+
+    // Runs before the push lookups below, so a recipient without the app
+    // still gets this.
+    //
+    // Fast path for the standalone-delivery refund rule: when a vendor declines
+    // an item, reconcile open delivery orders so a fully-denied order refunds
+    // its delivery promptly. (24h auto-declines don't reach this endpoint — the
+    // reconcile cron is the robust backstop for those.) Best-effort, idempotent.
+    if (transition === 'transition/decline-order') {
+      reconcileAllOpenDeliveries(integrationSdk).catch(err => {
+        console.error('push-transition delivery reconcile failed:', err);
+      });
+      // Same for free-delivery promos: a fully declined order gets its promo back.
+      reconcileAllRedemptions(integrationSdk).catch(err => {
+        console.error('push-transition promo reconcile failed:', err);
+      });
+    }
+
     const txResp = await integrationSdk.transactions.show({
       id: transactionId,
       include: ['customer', 'provider', 'listing'],
@@ -134,16 +153,6 @@ module.exports = async (req, res) => {
     sendPushNotifications(pushMessages).catch(err => {
       console.error('push-transition send failed:', err);
     });
-
-    // Fast path for the standalone-delivery refund rule: when a vendor declines
-    // an item, reconcile open delivery orders so a fully-denied order refunds
-    // its delivery promptly. (24h auto-declines don't reach this endpoint — the
-    // reconcile cron is the robust backstop for those.) Best-effort, idempotent.
-    if (transition === 'transition/decline-order') {
-      reconcileAllOpenDeliveries(integrationSdk).catch(err => {
-        console.error('push-transition delivery reconcile failed:', err);
-      });
-    }
 
     res.status(200).json({ pushed: pushMessages.length });
   } catch (e) {

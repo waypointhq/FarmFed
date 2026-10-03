@@ -131,6 +131,33 @@ export default function App() {
     injectPushToken();
   }, [injectPushToken]);
 
+  // Tapping a push that carries a site path (e.g. a gifted promo → /my-promos)
+  // opens that page. A tap that launched the app waits for the first load.
+  const pageLoadedRef = useRef(false);
+  const pendingLinkRef = useRef<string | null>(null);
+  const openLink = useCallback((link: unknown) => {
+    if (typeof link !== 'string' || !link.startsWith('/')) return;
+    if (!pageLoadedRef.current || !webViewRef.current) {
+      pendingLinkRef.current = link;
+      return;
+    }
+    webViewRef.current.injectJavaScript(`window.location.assign(${JSON.stringify(link)}); true;`);
+  }, []);
+
+  useEffect(() => {
+    Notifications.getLastNotificationResponseAsync()
+      .then(response => {
+        openLink(response?.notification.request.content.data?.link);
+        // Some platforms keep returning the same response on every launch.
+        (Notifications as any).clearLastNotificationResponseAsync?.();
+      })
+      .catch(() => null);
+    const subscription = Notifications.addNotificationResponseReceivedListener(response =>
+      openLink(response.notification.request.content.data?.link)
+    );
+    return () => subscription.remove();
+  }, [openLink]);
+
   // Hardware Android back button → WebView goBack if possible
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -219,6 +246,12 @@ export default function App() {
           onLoadEnd={() => {
             setLoading(false);
             injectPushToken();
+            if (!pageLoadedRef.current) {
+              pageLoadedRef.current = true;
+              const pending = pendingLinkRef.current;
+              pendingLinkRef.current = null;
+              if (pending) openLink(pending);
+            }
           }}
           allowsBackForwardNavigationGestures
           pullToRefreshEnabled

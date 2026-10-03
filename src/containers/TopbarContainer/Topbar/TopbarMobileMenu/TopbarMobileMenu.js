@@ -79,6 +79,7 @@ const TopbarMobileMenu = props => {
     inboxTab,
     currentUser,
     notificationCount = 0,
+    promoUnseenCount = 0,
     customLinks,
     onLogout,
     showCreateListingsLink,
@@ -201,6 +202,12 @@ const TopbarMobileMenu = props => {
               </NamedLink>
             </li>
           ) : null}
+          <li className={classNames(css.navigationLink, currentPageClass('MyPromosPage'))}>
+            <NamedLink name="MyPromosPage">
+              <FormattedMessage id="TopbarMobileMenu.myPromosLink" />
+              {promoUnseenCount > 0 ? <span className={css.promoDot} /> : null}
+            </NamedLink>
+          </li>
           <li className={classNames(css.navigationLink, currentPageClass('ProfileSettingsPage'))}>
             <NamedLink name="ProfileSettingsPage">
               <FormattedMessage id="TopbarMobileMenu.profileSettingsLink" />

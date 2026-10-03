@@ -499,11 +499,17 @@ export const convertOrderToDelivery = ({ orderGroupId, deliveryTransactionId, sh
 
 // Report a cart checkout that failed partway. Refunds anything already charged
 // in that checkout and records the failure for the admin panel.
-export const reportCheckoutFailure = ({ orderGroupId, reason, itemCount, chargedOrderIds }) => {
+export const reportCheckoutFailure = ({
+  orderGroupId,
+  reason,
+  itemCount,
+  chargedOrderIds,
+  promoRedemptionId,
+}) => {
   return request('/api/checkout-failures', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ orderGroupId, reason, itemCount, chargedOrderIds }),
+    body: JSON.stringify({ orderGroupId, reason, itemCount, chargedOrderIds, promoRedemptionId }),
   });
 };
 
@@ -606,3 +612,47 @@ export const fetchDailyOrderCount = ({ listingId }) => {
     headers: { 'Content-Type': 'application/json' },
   });
 };
+
+// ====== Free-delivery promos ====== //
+
+const jsonRequest = (path, method = 'GET', body) =>
+  request(path, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+
+// Customer
+export const fetchMyPromos = () => jsonRequest('/api/promos/mine');
+export const fetchUnseenPromoCount = () => jsonRequest('/api/promos/unseen');
+export const markPromosSeen = ({ promoIds } = {}) =>
+  jsonRequest('/api/promos/seen', 'POST', { promoIds });
+export const savePromoCode = ({ code }) => jsonRequest('/api/promos/save', 'POST', { code });
+export const checkPromoCode = ({ code, deliveryMethod, deliveryFeeCents }) =>
+  jsonRequest('/api/promos/check', 'POST', { code, deliveryMethod, deliveryFeeCents });
+export const redeemPromo = body => jsonRequest('/api/promos/redeem', 'POST', body);
+export const confirmPromo = ({ redemptionId, transactionId }) =>
+  jsonRequest('/api/promos/confirm', 'POST', { redemptionId, transactionId });
+
+// Admin
+export const adminFetchPromos = () => jsonRequest('/api/admin/promos');
+export const adminGeneratePromoCode = () => jsonRequest('/api/admin/promos/generate-code');
+export const adminCreatePromo = body => jsonRequest('/api/admin/promos', 'POST', body);
+export const adminFetchPromo = id => jsonRequest(`/api/admin/promos/${encodeURIComponent(id)}`);
+export const adminUpdatePromo = (id, body) =>
+  jsonRequest(`/api/admin/promos/${encodeURIComponent(id)}`, 'PUT', body);
+export const adminDeletePromo = id =>
+  jsonRequest(`/api/admin/promos/${encodeURIComponent(id)}`, 'DELETE');
+export const adminSetPromoState = (id, state) =>
+  jsonRequest(`/api/admin/promos/${encodeURIComponent(id)}/state`, 'POST', { state });
+export const adminDuplicatePromo = id =>
+  jsonRequest(`/api/admin/promos/${encodeURIComponent(id)}/duplicate`, 'POST', {});
+export const adminArchivePromo = id =>
+  jsonRequest(`/api/admin/promos/${encodeURIComponent(id)}/archive`, 'POST', {});
+export const adminRevokePromoGift = (id, userId) =>
+  jsonRequest(`/api/admin/promos/${encodeURIComponent(id)}/revoke`, 'POST', { userId });
+export const adminGiftPromo = body => jsonRequest('/api/admin/promos/gift', 'POST', body);
+export const adminSearchCustomers = q =>
+  jsonRequest(`/api/admin/customers?q=${encodeURIComponent(q)}`);
+export const adminFetchCustomerPromos = userId =>
+  jsonRequest(`/api/admin/customers/${encodeURIComponent(userId)}/promos`);

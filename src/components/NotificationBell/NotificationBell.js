@@ -110,20 +110,37 @@ const NotificationBell = props => {
             notifications
               .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
               .slice(0, 20)
-              .map(n => (
-                <NamedLink
-                  key={n.id}
-                  name="ListingPage"
-                  params={{ id: n.listingId, slug: n.listingTitle?.toLowerCase().replace(/\s+/g, '-') || 'listing' }}
-                  className={classNames(css.notificationItem, { [css.unread]: !n.read })}
-                  onClick={() => setIsOpen(false)}
-                >
-                  <span className={css.vendorName}>{n.vendorName}</span>
-                  {' '}
-                  {intl.formatMessage({ id: 'NotificationBell.newListing' }, { title: n.listingTitle })}
-                  <span className={css.timestamp}>{formatTime(n.createdAt)}</span>
-                </NamedLink>
-              ))
+              .map(n =>
+                n.type === 'promo' ? (
+                  <NamedLink
+                    key={n.id}
+                    name="MyPromosPage"
+                    className={classNames(css.notificationItem, { [css.unread]: !n.read })}
+                  >
+                    <span className={css.vendorName}>{n.title || 'Free Delivery'}</span>{' '}
+                    {intl.formatMessage({ id: 'NotificationBell.promoGifted' })}
+                    <span className={css.timestamp}>{formatTime(n.createdAt)}</span>
+                  </NamedLink>
+                ) : (
+                  <NamedLink
+                    key={n.id}
+                    name="ListingPage"
+                    params={{
+                      id: n.listingId,
+                      slug: n.listingTitle?.toLowerCase().replace(/\s+/g, '-') || 'listing',
+                    }}
+                    className={classNames(css.notificationItem, { [css.unread]: !n.read })}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <span className={css.vendorName}>{n.vendorName}</span>{' '}
+                    {intl.formatMessage(
+                      { id: 'NotificationBell.newListing' },
+                      { title: n.listingTitle }
+                    )}
+                    <span className={css.timestamp}>{formatTime(n.createdAt)}</span>
+                  </NamedLink>
+                )
+              )
           )}
         </div>
       ) : null}

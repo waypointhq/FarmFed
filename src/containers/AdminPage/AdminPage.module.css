@@ -22,6 +22,8 @@
 .tabs {
   display: flex;
   gap: 0;
+  /* Too many tabs for a phone: scroll sideways rather than overflow the page. */
+  overflow-x: auto;
   border-bottom: 1px solid var(--colorGrey100, #e0e0e0);
   margin-bottom: 24px;
 
@@ -41,6 +43,7 @@
   color: var(--colorGrey700, #4a4a4a);
   border-bottom: 3px solid transparent;
   margin-bottom: -1px;
+  white-space: nowrap;
   transition: color 0.2s, border-color 0.2s;
 }
 

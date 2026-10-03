@@ -12,6 +12,10 @@
 // whole order is denied" rule — it catches the 24h auto-declines that never
 // ping the server. Run it on a schedule (see comment below).
 //
+// It also settles free-delivery promo uses the same way: a promo order whose
+// items were all declined or cancelled gets its promo back, and a use left
+// pending by an abandoned checkout is released.
+//
 // Usage:
 //   node scripts/reconcile-deliveries.js
 //
@@ -27,6 +31,8 @@ require('dotenv').config();
 
 const { getIntegrationSdk } = require('../server/api-util/sdk');
 const { reconcileAllOpenDeliveries } = require('../server/api-util/deliveryReconcile');
+const settingsStore = require('../server/api-util/settingsStore');
+const { reconcileAllRedemptions } = require('../server/api-util/promos');
 
 (async () => {
   const integrationSdk = getIntegrationSdk();
@@ -41,6 +47,13 @@ const { reconcileAllOpenDeliveries } = require('../server/api-util/deliveryRecon
   results
     .filter(r => r.action === 'refunded' || r.action === 'captured' || r.action === 'error')
     .forEach(r => console.log(' -', JSON.stringify(r)));
+
+  // Promo storage lives in Redis; connect, settle, and let the process exit.
+  await settingsStore.init([]);
+  const promoChanges = await reconcileAllRedemptions(integrationSdk);
+  console.log(`Settled ${promoChanges} promo use(s).`);
+  const redis = settingsStore.getRedisClient();
+  if (redis) await redis.quit();
 })().catch(e => {
   console.error('FATAL reconcile-deliveries:', e.message);
   process.exit(1);

@@ -6,6 +6,8 @@ import {
   notifyTransition,
   linkDeliveryItems,
   reportCheckoutFailure,
+  redeemPromo,
+  confirmPromo,
 } from '../../util/api';
 import { storableError } from '../../util/errors';
 import * as log from '../../util/log';
@@ -52,7 +54,7 @@ const generateOrderGroupId = () => {
  * For new cards, sets up a reusable PaymentMethod via SetupIntent before processing.
  */
 const processCartCheckoutPayloadCreator = async (
-  { cartItems, stripe, card, billingDetails, shippingDetails, processAlias, savedPaymentMethodId, stripeCustomer, orderGroupId, deliveryTransactionId, customShippingFeeCents, cartFeeCents },
+  { cartItems, stripe, card, billingDetails, shippingDetails, processAlias, savedPaymentMethodId, stripeCustomer, orderGroupId, deliveryTransactionId, customShippingFeeCents, cartFeeCents, promoCode },
   { dispatch, extra: sdk, rejectWithValue }
 ) => {
   const results = [];
@@ -142,8 +144,6 @@ const processCartCheckoutPayloadCreator = async (
   // single declined item then never claws back delivery. If the delivery
   // listing isn't configured, or we're adding to an existing order, or there's
   // no shipping, we fall back to the legacy first-item shipping behavior.
-  const canStandaloneDelivery =
-    !!DELIVERY_LISTING_ID && hasShippingItems && routeShippingFeeCents > 0 && !orderGroupId;
   // All transactions from this checkout share one order-group id so they can be
   // reconciled (and added to) together.
   // Every checkout gets a group id, not just the ones with a standalone
@@ -151,6 +151,52 @@ const processCartCheckoutPayloadCreator = async (
   // pickup-only or single-item cart has to render through the same structure
   // as everything else — one code path, not two.
   const effectiveGroupId = orderGroupId || generateOrderGroupId();
+
+  // Free-delivery promo: count the use now, before anything is charged, so
+  // the last use can only go to one buyer. If the promo stopped working since
+  // it was applied (expired, last use taken), stop here with nothing charged
+  // and let the buyer confirm the new total. Only a delivery order with a fee
+  // to cover spends a promo.
+  let promoRedemption = null;
+  // The checkout showed delivery as free; if the fee can't be worked out
+  // now, stop rather than charge it.
+  if (promoCode && hasShippingItems && !orderGroupId && routeShippingFeeCents == null) {
+    return rejectWithValue({ promoError: { code: promoCode, reason: 'unavailable', date: null } });
+  }
+  if (promoCode && hasShippingItems && shippingAddr && routeShippingFeeCents > 0 && !orderGroupId) {
+    let promoResult;
+    try {
+      promoResult = await redeemPromo({
+        code: promoCode,
+        orderGroupId: effectiveGroupId,
+        shippingAddress: {
+          line1: shippingAddr.addressLine1,
+          city: shippingAddr.city,
+          state: shippingAddr.state,
+          postalCode: shippingAddr.postalCode,
+          country: shippingAddr.country,
+        },
+        currency: cartItems[0]?.listing?.attributes?.price?.currency,
+      });
+    } catch (e) {
+      log.error(e, 'cart-checkout-promo-redeem-failed', { promoCode });
+      promoResult = { ok: false, reason: 'unavailable' };
+    }
+    if (!promoResult.ok) {
+      return rejectWithValue({
+        promoError: { code: promoCode, reason: promoResult.reason, date: promoResult.date || null },
+      });
+    }
+    promoRedemption = promoResult;
+  }
+  const deliveryCoveredByPromo = !!promoRedemption;
+
+  const canStandaloneDelivery =
+    !!DELIVERY_LISTING_ID &&
+    hasShippingItems &&
+    routeShippingFeeCents > 0 &&
+    !orderGroupId &&
+    !deliveryCoveredByPromo;
 
   let shippingFeeAssigned = false;
   // Charge the platform fee once per cart, but split it proportionally across
@@ -204,9 +250,10 @@ const processCartCheckoutPayloadCreator = async (
       // Shipping fee assignment:
       // - Standalone delivery enabled, or adding to an existing order:
       //   items carry $0 shipping (delivery is its own transaction).
+      // - Free-delivery promo: $0 everywhere; Farm Fed covers delivery.
       // - Legacy fallback: full route fee on the first shipping item, $0 rest.
       const customShippingMaybe =
-        canStandaloneDelivery || orderGroupId
+        canStandaloneDelivery || orderGroupId || deliveryCoveredByPromo
           ? { customShippingFeeCents: 0 }
           : deliveryMethod === 'shipping' && routeShippingFeeCents != null
             ? { customShippingFeeCents: shippingFeeAssigned ? 0 : routeShippingFeeCents }
@@ -350,6 +397,8 @@ const processCartCheckoutPayloadCreator = async (
           reason: realErrorMessage(e) || 'Payment failed',
           itemCount: cartItems.length,
           chargedOrderIds,
+          // Gives the promo use back along with the refunds.
+          ...(promoRedemption ? { promoRedemptionId: promoRedemption.redemptionId } : {}),
         });
         refundedIds = unwind?.refunded || [];
       } catch (reportError) {
@@ -514,8 +563,25 @@ const processCartCheckoutPayloadCreator = async (
     }
   }
 
+  // The order went through on the promo: the use stands. Best-effort — if
+  // this call is lost, server-side reconciliation settles it the same way.
+  if (promoRedemption) {
+    const firstOrderId = results.find(r => r.success && r.orderId)?.orderId;
+    confirmPromo({ redemptionId: promoRedemption.redemptionId, transactionId: firstOrderId }).catch(
+      e => log.error(e, 'cart-checkout-promo-confirm-failed')
+    );
+    results.push({
+      isPromo: true,
+      success: true,
+      code: promoRedemption.code,
+      coveredCents: promoRedemption.coveredCents,
+    });
+  }
+
   // Clear successful items from cart
-  const successfulIds = results.filter(r => r.success && !r.isDelivery).map(r => r.listingId);
+  const successfulIds = results
+    .filter(r => r.success && !r.isDelivery && !r.isPromo)
+    .map(r => r.listingId);
   if (successfulIds.length > 0) {
     dispatch(removeItems(successfulIds));
   }
@@ -589,6 +655,9 @@ const initialState = {
   currentItemIndex: 0,
   completedResults: null,
   checkoutError: null,
+  // Set when the applied promo stopped working at Place Order; nothing was
+  // charged and the buyer confirms the new total.
+  promoError: null,
 };
 
 const cartCheckoutSlice = createSlice({
@@ -599,6 +668,9 @@ const cartCheckoutSlice = createSlice({
       state.currentItemIndex = action.payload;
     },
     resetCheckout: () => initialState,
+    clearPromoError: state => {
+      state.promoError = null;
+    },
   },
   extraReducers: builder => {
     builder
@@ -607,6 +679,7 @@ const cartCheckoutSlice = createSlice({
         state.currentItemIndex = 0;
         state.completedResults = null;
         state.checkoutError = null;
+        state.promoError = null;
       })
       .addCase(processCartCheckout.fulfilled, (state, action) => {
         state.checkoutInProgress = false;
@@ -614,6 +687,11 @@ const cartCheckoutSlice = createSlice({
       })
       .addCase(processCartCheckout.rejected, (state, action) => {
         state.checkoutInProgress = false;
+        if (action.payload?.promoError) {
+          // Nothing was charged: stay on the form, not the results view.
+          state.promoError = action.payload.promoError;
+          return;
+        }
         state.checkoutError = action.payload?.error || 'Checkout failed';
         state.completedResults = action.payload;
       })
@@ -632,7 +710,7 @@ const cartCheckoutSlice = createSlice({
   },
 });
 
-export const { setCurrentItemIndex, resetCheckout } = cartCheckoutSlice.actions;
+export const { setCurrentItemIndex, resetCheckout, clearPromoError } = cartCheckoutSlice.actions;
 export default cartCheckoutSlice.reducer;
 
 // ================ Selectors ================ //

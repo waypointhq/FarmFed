@@ -13,7 +13,12 @@ import { Page, LayoutSingleColumn } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
-import { getCheckoutState, processCartCheckout, resetCheckout } from './CartCheckoutPage.duck';
+import {
+  getCheckoutState,
+  processCartCheckout,
+  resetCheckout,
+  clearPromoError,
+} from './CartCheckoutPage.duck';
 import CartCheckoutPageContent from './CartCheckoutPageContent';
 
 import css from './CartCheckoutPage.module.css';
@@ -24,6 +29,7 @@ export const CartCheckoutPageComponent = props => {
     cartItems,
     checkoutState,
     onProcessCheckout,
+    onClearPromoError,
     onResetCheckout,
     onFetchCurrentUser,
     currentUser,
@@ -57,6 +63,7 @@ export const CartCheckoutPageComponent = props => {
           cartItems={cartItems}
           checkoutState={checkoutState}
           onProcessCheckout={onProcessCheckout}
+          onClearPromoError={onClearPromoError}
           currentUser={currentUser}
           stripeCustomer={currentUser?.stripeCustomer}
           config={config}
@@ -81,6 +88,7 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => ({
   onProcessCheckout: params => dispatch(processCartCheckout(params)),
   onResetCheckout: () => dispatch(resetCheckout()),
+  onClearPromoError: () => dispatch(clearPromoError()),
   onFetchCurrentUser: params => dispatch(fetchCurrentUser(params)),
 });
 

@@ -313,3 +313,25 @@
     }
   }
 }
+
+/* Unseen free-delivery promo: dot on the avatar and on the My Promos item. */
+.avatarDot,
+.menuItemDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--colorFail);
+}
+
+.avatarDot {
+  position: relative;
+  top: -10px;
+  left: -8px;
+  border: 1px solid var(--colorWhite);
+}
+
+.menuItemDot {
+  margin-left: 8px;
+  vertical-align: middle;
+}

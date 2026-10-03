@@ -20,6 +20,7 @@ import { H3, Page, UserNav, NamedLink, LayoutSingleColumn } from '../../componen
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
 import FooterContainer from '../../containers/FooterContainer/FooterContainer';
 
+import MyPromosStrip from '../../components/MyPromosStrip/MyPromosStrip';
 import ProfileSettingsForm from './ProfileSettingsForm/ProfileSettingsForm';
 
 import { updateProfile, uploadImage } from './ProfileSettingsPage.duck';
@@ -212,6 +213,7 @@ export const ProfileSettingsPageComponent = props => {
         footer={<FooterContainer />}
       >
         <div className={css.content}>
+          <MyPromosStrip />
           <div className={css.headingContainer}>
             <H3 as="h1" className={css.heading}>
               <FormattedMessage id="ProfileSettingsPage.heading" />

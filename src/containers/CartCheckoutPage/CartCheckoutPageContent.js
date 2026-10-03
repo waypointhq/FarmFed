@@ -6,9 +6,11 @@ import { types as sdkTypes } from '../../util/sdkLoader';
 import { calculateCartFee, estimateCartDelivery, fetchPickupSettings, fetchActiveOrderGroup } from '../../util/api';
 import appSettings from '../../config/settings';
 import { requestAppReviewAfterOrder } from '../../util/appReview';
+import { clearAppliedPromoCode, formatPromoDate, promoReasonMessageId } from '../../util/promos';
 
 import { NamedLink, PrimaryButton } from '../../components';
 
+import { useCheckoutPromo, PromoBanner, PromoCodeRow } from './CheckoutPromo';
 import css from './CartCheckoutPage.module.css';
 
 const { Money } = sdkTypes;
@@ -65,7 +67,16 @@ const CartItemRow = ({ item, intl }) => {
 };
 
 const CartCheckoutPageContent = props => {
-  const { cartItems, checkoutState, onProcessCheckout, currentUser, stripeCustomer, config, intl } = props;
+  const {
+    cartItems,
+    checkoutState,
+    onProcessCheckout,
+    onClearPromoError,
+    currentUser,
+    stripeCustomer,
+    config,
+    intl,
+  } = props;
 
   const profile = currentUser?.attributes?.profile;
   const savedAddress = currentUser?.attributes?.profile?.protectedData?.address;
@@ -113,6 +124,9 @@ const CartCheckoutPageContent = props => {
     }
   }, [savedCard, paymentChoice, cardReady]);
   const [estimatedDelivery, setEstimatedDelivery] = useState(null);
+  // The quoted fee once the estimate is back, including 0 when delivery is
+  // free; null while unknown. (estimatedDelivery is null for both.)
+  const [quotedDeliveryCents, setQuotedDeliveryCents] = useState(null);
   const [estimatedFee, setEstimatedFee] = useState(null);
   // Set when the typed shipping address falls outside the delivery zone, or
   // can't be located at all. The server refuses these at initiate either way;
@@ -207,6 +221,29 @@ const CartCheckoutPageContent = props => {
 
   const hasShippingItems = selectedDeliveryMethod === 'shipping' && shippingAvailable;
 
+  // Joining an existing order: its delivery is already paid, so there is
+  // nothing for a promo to cover.
+  const joiningExistingOrder = addToExistingOrder && !!activeOrderGroup;
+  const promo = useCheckoutPromo({
+    isLoggedIn: !!currentUser?.id,
+    deliveryMethod: hasShippingItems ? 'shipping' : selectedDeliveryMethod,
+    deliveryFeeCents: joiningExistingOrder && hasShippingItems ? 0 : quotedDeliveryCents,
+  });
+
+  // The promo stopped working at Place Order (nothing was charged): take it
+  // off so the buyer sees the new total and can confirm. A temporary failure
+  // to check it leaves it on to try again.
+  const { promoError } = checkoutState;
+  const promoErrorIsTemporary = promoError?.reason === 'unavailable';
+  useEffect(() => {
+    if (promoError && !promoErrorIsTemporary) promo.dropAfterFailedRedeem();
+  }, [promoError]);
+
+  // Order placed: the promo has been used, so don't carry it to the next cart.
+  useEffect(() => {
+    if (checkoutState.completedResults?.results?.some(r => r.isPromo)) clearAppliedPromoCode();
+  }, [checkoutState.completedResults]);
+
   // Initialize Stripe instance on mount
   useEffect(() => {
     if (typeof window === 'undefined' || !window.Stripe) return;
@@ -279,6 +316,7 @@ const CartCheckoutPageContent = props => {
   useEffect(() => {
     if (selectedDeliveryMethod !== 'shipping' || !cartItems.length) {
       setEstimatedDelivery(null);
+      setQuotedDeliveryCents(null);
       setDeliveryDistanceMiles(null);
       return;
     }
@@ -287,6 +325,7 @@ const CartCheckoutPageContent = props => {
     const hasAddress = !!(addressLine1 && city && postalCode && country);
     if (!hasAddress) {
       setEstimatedDelivery(null);
+      setQuotedDeliveryCents(null);
       setDeliveryDistanceMiles(null);
       return;
     }
@@ -314,6 +353,7 @@ const CartCheckoutPageContent = props => {
           if (result.outsideDeliveryZone) {
             setOutsideZone(result.reason || 'outside');
             setEstimatedDelivery(null);
+            setQuotedDeliveryCents(null);
             setDeliveryDistanceMiles(null);
             setEstimatingBreakdown(false);
             setDeliveryEstimateError(null);
@@ -321,6 +361,7 @@ const CartCheckoutPageContent = props => {
           }
           setOutsideZone(null);
           setEstimatedDelivery(totalFeeCents > 0 ? totalFeeCents : null);
+          setQuotedDeliveryCents(totalFeeCents > 0 ? totalFeeCents : 0);
           setDeliveryDistanceMiles(totalDistanceMiles > 0 ? totalDistanceMiles : null);
           if (rateCentsPerMile > 0) setDeliveryRateCents(rateCentsPerMile);
           setEstimatingBreakdown(false);
@@ -328,6 +369,7 @@ const CartCheckoutPageContent = props => {
         })
         .catch(() => {
           setEstimatedDelivery(null);
+          setQuotedDeliveryCents(null);
           setDeliveryDistanceMiles(null);
           setEstimatingBreakdown(false);
           setDeliveryEstimateError(true);
@@ -402,6 +444,7 @@ const CartCheckoutPageContent = props => {
           }
         : {};
 
+      if (onClearPromoError) onClearPromoError();
       onProcessCheckout({
         cartItems: itemsWithDelivery,
         stripe: stripeRef.current,
@@ -412,10 +455,11 @@ const CartCheckoutPageContent = props => {
         savedPaymentMethodId,
         stripeCustomer,
         cartFeeCents: estimatedFee || 0,
+        ...(promo.isActive ? { promoCode: promo.applied.code } : {}),
         ...orderGroupMaybe,
       });
     },
-    [cartItems, shippingAddress, hasShippingItems, selectedDeliveryMethod, onProcessCheckout, paymentChoice, defaultPaymentMethod, stripeCustomer, estimatedFee, addToExistingOrder, activeOrderGroup, activeDeliveryTxId]
+    [cartItems, shippingAddress, hasShippingItems, selectedDeliveryMethod, onProcessCheckout, onClearPromoError, paymentChoice, defaultPaymentMethod, stripeCustomer, estimatedFee, addToExistingOrder, activeOrderGroup, activeDeliveryTxId, promo.isActive, promo.applied]
   );
 
   // Success/Results view
@@ -441,7 +485,19 @@ const CartCheckoutPageContent = props => {
                 <FormattedMessage id="CartCheckoutPage.completedOrders" />
               </h3>
               {successResults.map(result =>
-                result.isDelivery ? (
+                result.isPromo ? (
+                  <div key="promo" className={css.resultItem}>
+                    <span className={css.resultTitle}>
+                      <FormattedMessage
+                        id="CartCheckoutPage.promoResultLabel"
+                        values={{ code: result.code }}
+                      />
+                    </span>
+                    <span className={css.promoFree}>
+                      <FormattedMessage id="CartCheckoutPage.promoFree" />
+                    </span>
+                  </div>
+                ) : result.isDelivery ? (
                   // Delivery is an operator-managed order with no buyer-facing
                   // transaction page; show the charged fee instead of a link.
                   <div key={result.orderId} className={css.resultItem}>
@@ -529,7 +585,11 @@ const CartCheckoutPageContent = props => {
   // of re-showing the full fees.
   const addingToExistingOrder = addToExistingOrder && !!activeOrderGroup;
 
-  const deliveryAmount = addingToExistingOrder ? 0 : estimatedDelivery || 0;
+  // A free-delivery promo zeroes the delivery charge; Farm Fed covers it.
+  const deliveryCoveredByPromo = promo.isActive && !addingToExistingOrder;
+  const deliveryAmount =
+    addingToExistingOrder || deliveryCoveredByPromo ? 0 : estimatedDelivery || 0;
+  const promoSavingsCents = deliveryCoveredByPromo ? estimatedDelivery || 0 : 0;
   const feeAmount = addingToExistingOrder ? 0 : estimatedFee || 0;
   // Hide the fee row entirely when there is no buyer-side fee. Under a
   // provider-side commission the platform's cut comes out of the vendor's
@@ -539,7 +599,12 @@ const CartCheckoutPageContent = props => {
   const showDeliveryRow =
     !addingToExistingOrder && hasShippingItems && (estimatingBreakdown || estimatedDelivery != null);
   const showBreakdown =
-    estimatingBreakdown || showFeeRow || showDeliveryRow || addingToExistingOrder;
+    estimatingBreakdown ||
+    showFeeRow ||
+    showDeliveryRow ||
+    addingToExistingOrder ||
+    !!promo.applied ||
+    promo.showBanner;
 
   // Card processing fee: one per Stripe charge. Each cart item is its own
   // transaction/charge, plus one more when this checkout creates a standalone
@@ -849,6 +914,24 @@ const CartCheckoutPageContent = props => {
           ) : null}
         </div>
 
+        {promoError && !checkoutInProgress ? (
+          <div className={css.errorMessage} role="alert">
+            <FormattedMessage
+              id={promoReasonMessageId(promoError.reason)}
+              values={{ date: formatPromoDate(promoError.date) }}
+            />
+            {promoErrorIsTemporary ? null : (
+              <>
+                {' '}
+                <FormattedMessage
+                  id="CartCheckoutPage.promoRemovedAtCheckout"
+                  values={{ total: formattedTotal }}
+                />
+              </>
+            )}
+          </div>
+        ) : null}
+
         {checkoutError ? (
           <div className={css.errorMessage}>
             <FormattedMessage id="CartCheckoutPage.errorPayment" />
@@ -899,6 +982,7 @@ const CartCheckoutPageContent = props => {
             {cartItems.map(item => (
               <CartItemRow key={item.listingId} item={item} intl={intl} />
             ))}
+            <PromoBanner promo={promo} />
             {showBreakdown ? (
               <>
                 <div className={css.subtotalRow}>
@@ -920,6 +1004,13 @@ const CartCheckoutPageContent = props => {
                         <span className={css.estimatingText}>
                           <FormattedMessage id="CartCheckoutPage.estimatingDelivery" />
                         </span>
+                      ) : deliveryCoveredByPromo ? (
+                        <>
+                          <s className={css.promoStruck}>{formattedDelivery}</s>{' '}
+                          <span className={css.promoFree}>
+                            <FormattedMessage id="CartCheckoutPage.promoFree" />
+                          </span>
+                        </>
                       ) : (
                         formattedDelivery
                       )}
@@ -955,6 +1046,7 @@ const CartCheckoutPageContent = props => {
                     </span>
                   </div>
                 ) : null}
+                {!addingToExistingOrder ? <PromoCodeRow promo={promo} /> : null}
               </>
             ) : null}
             <div className={css.totalRow}>
@@ -971,6 +1063,14 @@ const CartCheckoutPageContent = props => {
                 )}
               </span>
             </div>
+            {promoSavingsCents > 0 && !estimatingBreakdown ? (
+              <p className={css.promoSavings}>
+                <FormattedMessage
+                  id="CartCheckoutPage.promoSaved"
+                  values={{ amount: formatMoney(intl, new Money(promoSavingsCents, currency)) }}
+                />
+              </p>
+            ) : null}
           </div>
         </div>
       </form>

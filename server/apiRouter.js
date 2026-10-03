@@ -59,6 +59,8 @@ const adminMarkDelivered = require('./api/admin/mark-delivered');
 const adminMarkReceived = require('./api/admin/mark-received');
 const adminOrdersPendingAcceptance = require('./api/admin/orders-pending-acceptance');
 const adminAcceptOrder = require('./api/admin/accept-order');
+const adminPromos = require('./api/admin/promos');
+const promos = require('./api/promos');
 const adminSendPush = require('./api/admin/send-push');
 const {
   getHandler: getAnnouncements,
@@ -131,6 +133,7 @@ router.use('/announcements', bodyParser.json());
 router.use('/notify-followers', bodyParser.json());
 router.use('/device-tokens', bodyParser.json());
 router.use('/push/transition', bodyParser.json());
+router.use('/promos', bodyParser.json());
 
 // ================ API router endpoints: ================ //
 
@@ -229,6 +232,30 @@ router.post('/admin/mark-delivered', adminMarkDelivered);
 router.post('/admin/mark-received', adminMarkReceived);
 router.get('/admin/orders-pending-acceptance', adminOrdersPendingAcceptance);
 router.post('/admin/accept-order', adminAcceptOrder);
+
+// Free-delivery promos: admin Promotions
+router.get('/admin/promos', adminPromos.list);
+router.post('/admin/promos', adminPromos.create);
+router.get('/admin/promos/generate-code', adminPromos.generateCode);
+router.post('/admin/promos/gift', adminPromos.gift);
+router.get('/admin/promos/:id', adminPromos.show);
+router.put('/admin/promos/:id', adminPromos.update);
+router.delete('/admin/promos/:id', adminPromos.remove);
+router.post('/admin/promos/:id/state', adminPromos.setState);
+router.post('/admin/promos/:id/duplicate', adminPromos.duplicate);
+router.post('/admin/promos/:id/archive', adminPromos.archive);
+router.post('/admin/promos/:id/revoke', adminPromos.revoke);
+router.get('/admin/customers', adminPromos.searchCustomers);
+router.get('/admin/customers/:id/promos', adminPromos.customerPromos);
+
+// Free-delivery promos: customers
+router.get('/promos/mine', promos.mine);
+router.get('/promos/unseen', promos.unseen);
+router.post('/promos/seen', promos.seen);
+router.post('/promos/save', promos.save);
+router.post('/promos/check', promos.check);
+router.post('/promos/redeem', promos.redeem);
+router.post('/promos/confirm', promos.confirm);
 
 // Admin Push Notification Center: broadcast a push + in-app announcement.
 router.post('/admin/send-push', adminSendPush);

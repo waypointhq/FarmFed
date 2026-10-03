@@ -22,6 +22,8 @@ const EditListingPage = loadable(() => import(/* webpackChunkName: "EditListingP
 const EmailVerificationPage = loadable(() => import(/* webpackChunkName: "EmailVerificationPage" */ '../containers/EmailVerificationPage/EmailVerificationPage'));
 const InboxPage = loadable(() => import(/* webpackChunkName: "InboxPage" */ '../containers/InboxPage/InboxPage'));
 const FollowedVendorsPage = loadable(() => import(/* webpackChunkName: "FollowedVendorsPage" */ '../containers/FollowedVendorsPage/FollowedVendorsPage'));
+const MyPromosPage = loadable(() => import(/* webpackChunkName: "MyPromosPage" */ '../containers/MyPromosPage/MyPromosPage'));
+const PromoRedirectPage = loadable(() => import(/* webpackChunkName: "PromoRedirectPage" */ '../containers/PromoRedirectPage/PromoRedirectPage'));
 const OrdersPage = loadable(() => import(/* webpackChunkName: "OrdersPage" */ '../containers/OrdersPage/OrdersPage'));
 const VendorOrdersPage = loadable(() => import(/* webpackChunkName: "VendorOrdersPage" */ '../containers/VendorOrdersPage/VendorOrdersPage'));
 const MakeOfferPage = loadable(() => import(/* webpackChunkName: "MakeOfferPage" */ '../containers/MakeOfferPage/MakeOfferPage'));
@@ -287,6 +289,20 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       auth: true,
       authPage: 'LoginPage',
       component: FollowedVendorsPage,
+    },
+    {
+      path: '/my-promos',
+      name: 'MyPromosPage',
+      auth: true,
+      authPage: 'LoginPage',
+      component: MyPromosPage,
+    },
+    {
+      // "Shop Now" in the gift email: applies the promo to the cart, then
+      // opens the shop. No login needed to start shopping.
+      path: '/promo/:code',
+      name: 'PromoRedirectPage',
+      component: PromoRedirectPage,
     },
     {
       // Consolidated customer order history: one row per checkout rather than

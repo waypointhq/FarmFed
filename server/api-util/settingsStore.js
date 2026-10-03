@@ -97,4 +97,8 @@ const set = async (namespace, data) => {
 
 const isRedisConnected = () => !!redisClient;
 
-module.exports = { init, get, set, isRedisConnected };
+// For stores that need atomic operations (e.g. promo usage limits) rather than
+// whole-value reads and writes. null when running on the file fallback.
+const getRedisClient = () => redisClient;
+
+module.exports = { init, get, set, isRedisConnected, getRedisClient };

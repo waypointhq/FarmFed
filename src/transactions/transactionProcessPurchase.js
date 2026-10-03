@@ -37,6 +37,8 @@ export const transitions = {
   // Accept captures the payment and moves to PURCHASED. Decline (manual or auto)
   // refunds the customer and moves to DECLINED.
   ACCEPT_ORDER: 'transition/accept-order',
+  // FarmFed admins can accept on the vendor's behalf when the farm is closed.
+  OPERATOR_ACCEPT_ORDER: 'transition/operator-accept-order',
   DECLINE_ORDER: 'transition/decline-order',
   AUTO_DECLINE_ORDER: 'transition/auto-decline-order',
 
@@ -165,6 +167,7 @@ export const graph = {
     [states.PENDING_ACCEPTANCE]: {
       on: {
         [transitions.ACCEPT_ORDER]: states.PURCHASED,
+        [transitions.OPERATOR_ACCEPT_ORDER]: states.PURCHASED,
         [transitions.DECLINE_ORDER]: states.DECLINED,
         [transitions.AUTO_DECLINE_ORDER]: states.DECLINED,
       },
@@ -243,6 +246,7 @@ export const isRelevantPastTransition = transition => {
   return [
     transitions.CONFIRM_PAYMENT,
     transitions.ACCEPT_ORDER,
+    transitions.OPERATOR_ACCEPT_ORDER,
     transitions.DECLINE_ORDER,
     transitions.AUTO_DECLINE_ORDER,
     transitions.AUTO_CANCEL,

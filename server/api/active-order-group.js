@@ -15,6 +15,7 @@ const handler = async (req, res) => {
       lastTransitions: [
         'transition/confirm-payment',
         'transition/accept-order',
+        'transition/operator-accept-order',
       ],
       page: 1,
       perPage: 20,

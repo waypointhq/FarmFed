@@ -28,6 +28,7 @@ const ITEM_DENIED_TRANSITIONS = [
 // Anything from accept-order onward means the order went ahead.
 const ITEM_ACCEPTED_TRANSITIONS = [
   'transition/accept-order',
+  'transition/operator-accept-order',
   'transition/mark-delivered',
   'transition/operator-mark-delivered',
   'transition/mark-received',

@@ -5,7 +5,8 @@ const { isAdminUser } = require('../../api-util/admin');
  * GET /api/admin/orders-awaiting-delivery
  *
  * Lists default-purchase orders in the `purchased` state (lastTransition
- * accept-order) — i.e. accepted by the vendor and awaiting FarmFed delivery.
+ * accept-order, or operator-accept-order when an admin accepted for the vendor)
+ * — i.e. accepted and awaiting FarmFed delivery.
  * The operator marks these delivered from the admin Orders tab via
  * /api/admin/mark-delivered (vendors can no longer mark delivered).
  *
@@ -26,7 +27,7 @@ module.exports = (req, res) => {
       const integrationSdk = getIntegrationSdk();
       return integrationSdk.transactions
         .query({
-          lastTransitions: ['transition/accept-order'],
+          lastTransitions: ['transition/accept-order', 'transition/operator-accept-order'],
           include: ['listing', 'customer', 'provider'],
           'fields.user': ['profile.displayName'],
           'fields.listing': ['title'],

@@ -23,6 +23,13 @@ const TRANSITION_TEMPLATES = {
       body: `${providerName} accepted your order for ${listingTitle}.`,
     }),
   },
+  'transition/operator-accept-order': {
+    recipient: 'customer',
+    build: ({ listingTitle, providerName }) => ({
+      title: 'Order accepted',
+      body: `${providerName} accepted your order for ${listingTitle}.`,
+    }),
+  },
   'transition/decline-order': {
     recipient: 'customer',
     build: ({ listingTitle, providerName }) => ({

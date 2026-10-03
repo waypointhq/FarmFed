@@ -108,6 +108,12 @@
   color: var(--colorGrey400);
 }
 
+.deadlineUrgent {
+  font-size: 12px;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorAttentionDark);
+}
+
 .orderActions {
   display: flex;
   gap: 8px;

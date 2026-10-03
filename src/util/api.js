@@ -265,6 +265,23 @@ export const adminMarkDelivered = ({ transactionId }) => {
   });
 };
 
+// List paid orders still waiting on the vendor to accept — admin only.
+export const fetchOrdersPendingAcceptance = () => {
+  return request('/api/admin/orders-pending-acceptance', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+// Accept an order on the vendor's behalf (operator-accept-order) — admin only.
+export const adminAcceptOrder = ({ transactionId }) => {
+  return request('/api/admin/accept-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ transactionId }),
+  });
+};
+
 // Operator-mark a delivered order received — admin only. Escape hatch to push
 // orders stuck in the "delivered" state through to completion (pays out vendor).
 export const adminMarkReceived = ({ transactionId }) => {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useIntl, FormattedMessage } from '../../../util/reactIntl';
 
+import PendingAcceptanceSection from './PendingAcceptanceSection';
 import css from './OrdersTab.module.css';
 
 const formatDate = dateStr => {
@@ -64,48 +65,41 @@ const OrdersTab = props => {
     markInProgress,
     markError,
     onMarkDelivered,
+    onRefreshOrders,
   } = props;
 
   const intl = useIntl();
 
-  if (fetchInProgress) {
-    return (
-      <div className={css.root}>
-        <p className={css.loading}>
-          <FormattedMessage id="AdminPage.ordersLoading" />
-        </p>
-      </div>
-    );
-  }
-
-  if (fetchError) {
-    return (
-      <div className={css.root}>
-        <p className={css.error}>
-          <FormattedMessage id="AdminPage.ordersFetchError" />
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className={css.root}>
-      <p className={css.intro}>
-        <FormattedMessage id="AdminPage.ordersIntro" />
-      </p>
-
-      {markError ? (
-        <p className={css.error}>
-          <FormattedMessage id="AdminPage.ordersMarkError" />
-        </p>
-      ) : null}
+      <PendingAcceptanceSection onAccepted={onRefreshOrders} />
 
       <section className={css.section}>
         <h3 className={css.sectionTitle}>
           <FormattedMessage id="AdminPage.ordersHeading" />
-          <span className={css.count}>({orders.length})</span>
+          {!fetchInProgress && !fetchError ? (
+            <span className={css.count}>({orders.length})</span>
+          ) : null}
         </h3>
-        {orders.length === 0 ? (
+        <p className={css.intro}>
+          <FormattedMessage id="AdminPage.ordersIntro" />
+        </p>
+
+        {markError ? (
+          <p className={css.error}>
+            <FormattedMessage id="AdminPage.ordersMarkError" />
+          </p>
+        ) : null}
+
+        {fetchInProgress ? (
+          <p className={css.loading}>
+            <FormattedMessage id="AdminPage.ordersLoading" />
+          </p>
+        ) : fetchError ? (
+          <p className={css.error}>
+            <FormattedMessage id="AdminPage.ordersFetchError" />
+          </p>
+        ) : orders.length === 0 ? (
           <p className={css.emptyState}>
             <FormattedMessage id="AdminPage.ordersEmpty" />
           </p>

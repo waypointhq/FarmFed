@@ -31,6 +31,7 @@ import {
   clearBulletinsUpdateSuccess,
   setVendorTaxExempt,
   markOrderDelivered,
+  fetchOrdersAwaitingDelivery,
   sendPushBroadcast,
   setAnnouncementActive,
   clearSendPushSuccess,
@@ -129,6 +130,7 @@ const AdminPageComponent = props => {
     onClearBulletinsSuccess,
     onSetVendorTaxExempt,
     onMarkDelivered,
+    onRefreshOrders,
     onSendPush,
     onToggleAnnouncement,
     onClearSendPushSuccess,
@@ -241,6 +243,7 @@ const AdminPageComponent = props => {
                 markInProgress={markDeliveredInProgress}
                 markError={markDeliveredError}
                 onMarkDelivered={onMarkDelivered}
+                onRefreshOrders={onRefreshOrders}
               />
             )}
 
@@ -440,6 +443,7 @@ const mapDispatchToProps = dispatch => ({
   onClearBulletinsSuccess: () => dispatch(clearBulletinsUpdateSuccess()),
   onSetVendorTaxExempt: params => dispatch(setVendorTaxExempt(params)),
   onMarkDelivered: transactionId => dispatch(markOrderDelivered({ transactionId })),
+  onRefreshOrders: () => dispatch(fetchOrdersAwaitingDelivery()).catch(() => null),
   onSendPush: params => dispatch(sendPushBroadcast(params)),
   onToggleAnnouncement: params => dispatch(setAnnouncementActive(params)),
   onClearSendPushSuccess: () => dispatch(clearSendPushSuccess()),

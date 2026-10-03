@@ -35,6 +35,7 @@ const SUBORDER_UNAVAILABLE = 'unavailable';
 
 const ACCEPTED_TRANSITIONS = [
   'transition/accept-order',
+  'transition/operator-accept-order',
   'transition/mark-delivered',
   'transition/operator-mark-delivered',
   'transition/mark-received',

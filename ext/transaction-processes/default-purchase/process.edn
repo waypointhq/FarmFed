@@ -36,6 +36,16 @@
     {:name :action/stripe-capture-payment-intent}],
    :from :state/pending-acceptance,
    :to :state/purchased}
+  ;; FarmFed admins accept on a vendor's behalf when the farm is closed (e.g.
+  ;; weekends), so the order isn't auto-declined after a day. Same effect as
+  ;; accept-order; run through the Integration API from the admin Orders tab.
+  {:name :transition/operator-accept-order,
+   :actor :actor.role/operator,
+   :actions
+   [{:name :action/accept-stock-reservation}
+    {:name :action/stripe-capture-payment-intent}],
+   :from :state/pending-acceptance,
+   :to :state/purchased}
   {:name :transition/decline-order,
    :actor :actor.role/provider,
    :actions
@@ -224,6 +234,14 @@
    :on :transition/accept-order,
    :to :actor.role/customer,
    :template :purchase-order-receipt}
+  {:name :notification/purchase-operator-accepted-customer,
+   :on :transition/operator-accept-order,
+   :to :actor.role/customer,
+   :template :purchase-order-receipt}
+  {:name :notification/purchase-operator-accepted-provider,
+   :on :transition/operator-accept-order,
+   :to :actor.role/provider,
+   :template :purchase-order-operator-accepted-provider}
   {:name :notification/purchase-declined-customer,
    :on :transition/decline-order,
    :to :actor.role/customer,

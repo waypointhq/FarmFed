@@ -3,6 +3,7 @@ const { getSdk, handleError } = require('../../api-util/sdk');
 const { getTokens } = require('../../api-util/deviceTokens');
 const { sendPushNotifications } = require('../../api-util/pushSender');
 const announcements = require('../../api-util/announcements');
+const { isAdminUser } = require('../../api-util/admin');
 
 /**
  * POST /api/admin/send-push
@@ -17,8 +18,7 @@ module.exports = async (req, res) => {
 
   try {
     const response = await sdk.currentUser.show({ include: [] });
-    const isAdmin =
-      response.data.data?.attributes?.profile?.privateData?.isAdmin === true;
+    const isAdmin = isAdminUser(response.data.data);
     if (!isAdmin) {
       return res.status(403).json({ error: 'Forbidden: admin access required' });
     }

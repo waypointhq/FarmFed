@@ -4,6 +4,7 @@ import { compose } from 'redux';
 import { useIntl } from '../../util/reactIntl';
 import { useHistory, useLocation } from 'react-router-dom';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
+import { isAdminUser } from '../../util/userHelpers';
 import appSettings from '../../config/settings';
 import {
   Page,
@@ -140,7 +141,7 @@ const AdminPageComponent = props => {
   const searchParams = new URLSearchParams(location.search);
   const activeTab = searchParams.get('tab') || DELIVERY_TAB;
 
-  const isAdmin = currentUser?.attributes?.profile?.privateData?.isAdmin === true;
+  const isAdmin = isAdminUser(currentUser);
 
   if (!isAdmin && !deliveryFetchInProgress) {
     return (

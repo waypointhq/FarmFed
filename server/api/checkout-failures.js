@@ -1,5 +1,6 @@
 const { getSdk, getIntegrationSdk, handleError } = require('../api-util/sdk');
 const { getCheckoutFailures, recordCheckoutFailure } = require('../api-util/checkoutFailures');
+const { isAdminUser } = require('../api-util/admin');
 
 // Refunds a paid-for item and releases its stock. The operator has no
 // refunding transition out of `pending-acceptance` — only the provider or the
@@ -77,7 +78,7 @@ const getHandler = async (req, res) => {
   try {
     const sdk = getSdk(req, res);
     const response = await sdk.currentUser.show({ include: [] });
-    const isAdmin = response.data.data?.attributes?.profile?.privateData?.isAdmin === true;
+    const isAdmin = isAdminUser(response.data.data);
     if (!isAdmin) {
       return res.status(403).json({ error: 'Forbidden: admin access required' });
     }

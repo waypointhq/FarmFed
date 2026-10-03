@@ -1,5 +1,6 @@
 const { getGeofence, setGeofence, getVendorPolygon, getConsumerPolygon, setDualGeofence } = require('../api-util/geofence');
 const { getSdk, handleError } = require('../api-util/sdk');
+const { isAdminUser } = require('../api-util/admin');
 
 const isValidPolygon = polygon => {
   return (
@@ -25,7 +26,7 @@ const putHandler = (req, res) => {
     .show({ include: [] })
     .then(response => {
       const currentUser = response.data.data;
-      const isAdmin = currentUser?.attributes?.profile?.privateData?.isAdmin === true;
+      const isAdmin = isAdminUser(currentUser);
 
       if (!isAdmin) {
         return res.status(403).json({ error: 'Forbidden: admin access required' });

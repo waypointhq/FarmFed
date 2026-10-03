@@ -1,5 +1,6 @@
 const { getBulletins, setBulletins } = require('../api-util/bulletinSettings');
 const { getSdk, handleError } = require('../api-util/sdk');
+const { isAdminUser } = require('../api-util/admin');
 
 const getHandler = (req, res) => {
   const bulletins = getBulletins();
@@ -20,7 +21,7 @@ const putHandler = (req, res) => {
     .show({ include: [] })
     .then(response => {
       const currentUser = response.data.data;
-      const isAdmin = currentUser?.attributes?.profile?.privateData?.isAdmin === true;
+      const isAdmin = isAdminUser(currentUser);
 
       if (!isAdmin) {
         return res.status(403).json({ error: 'Forbidden: admin access required' });
@@ -53,7 +54,7 @@ const getAllHandler = (req, res) => {
     .show({ include: [] })
     .then(response => {
       const currentUser = response.data.data;
-      const isAdmin = currentUser?.attributes?.profile?.privateData?.isAdmin === true;
+      const isAdmin = isAdminUser(currentUser);
 
       if (!isAdmin) {
         return res.status(403).json({ error: 'Forbidden: admin access required' });

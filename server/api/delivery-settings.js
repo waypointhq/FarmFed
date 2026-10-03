@@ -4,6 +4,7 @@ const {
   resolveHubOrigin,
 } = require('../api-util/deliveryRate');
 const { getSdk, handleError } = require('../api-util/sdk');
+const { isAdminUser } = require('../api-util/admin');
 
 const getHandler = (req, res) => {
   res.status(200).json(getDeliverySettings());
@@ -16,7 +17,7 @@ const putHandler = (req, res) => {
     .show({ include: [] })
     .then(async response => {
       const currentUser = response.data.data;
-      const isAdmin = currentUser?.attributes?.profile?.privateData?.isAdmin === true;
+      const isAdmin = isAdminUser(currentUser);
 
       if (!isAdmin) {
         return res.status(403).json({ error: 'Forbidden: admin access required' });

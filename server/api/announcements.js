@@ -1,5 +1,6 @@
 const { getSdk, handleError } = require('../api-util/sdk');
 const announcements = require('../api-util/announcements');
+const { isAdminUser } = require('../api-util/admin');
 
 /**
  * GET /api/announcements — active announcements for the in-app home banner.
@@ -16,7 +17,7 @@ const getHandler = (req, res) => {
 const requireAdmin = async (req, res) => {
   const sdk = getSdk(req, res);
   const response = await sdk.currentUser.show({ include: [] });
-  return response.data.data?.attributes?.profile?.privateData?.isAdmin === true;
+  return isAdminUser(response.data.data);
 };
 
 /**

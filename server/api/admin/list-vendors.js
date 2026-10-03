@@ -1,4 +1,5 @@
 const { getSdk, getIntegrationSdk, handleError } = require('../../api-util/sdk');
+const { isAdminUser } = require('../../api-util/admin');
 
 // Admin-only: list all non-consumer (vendor) users with their tax-exempt flag.
 // We pull everyone and filter client-side because Sharetribe's query metadata
@@ -9,7 +10,7 @@ module.exports = async (req, res) => {
   try {
     const sdk = getSdk(req, res);
     const currentUserResponse = await sdk.currentUser.show({ include: [] });
-    const isAdmin = currentUserResponse.data.data?.attributes?.profile?.privateData?.isAdmin === true;
+    const isAdmin = isAdminUser(currentUserResponse.data.data);
     if (!isAdmin) {
       return res.status(403).json({ error: 'Forbidden: admin access required' });
     }

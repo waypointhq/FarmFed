@@ -1,4 +1,5 @@
 const { getSdk, getIntegrationSdk, handleError } = require('../../api-util/sdk');
+const { isAdminUser } = require('../../api-util/admin');
 
 /**
  * GET /api/admin/orders-awaiting-delivery
@@ -17,7 +18,7 @@ module.exports = (req, res) => {
     .show({ include: [] })
     .then(response => {
       const currentUser = response.data.data;
-      const isAdmin = currentUser?.attributes?.profile?.privateData?.isAdmin === true;
+      const isAdmin = isAdminUser(currentUser);
       if (!isAdmin) {
         return res.status(403).json({ error: 'Forbidden: admin access required' });
       }

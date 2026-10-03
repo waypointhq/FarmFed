@@ -5,13 +5,14 @@ const {
 } = require('../api-util/listingShuffleSettings');
 const { shuffleAllListings } = require('../api-util/shuffleListings');
 const { getSdk, getIntegrationSdk, handleError } = require('../api-util/sdk');
+const { isAdminUser } = require('../api-util/admin');
 
 // Resolve to true only for admins; otherwise respond 403 and resolve false.
 const requireAdmin = (req, res) =>
   getSdk(req, res)
     .currentUser.show({ include: [] })
     .then(response => {
-      const isAdmin = response.data.data?.attributes?.profile?.privateData?.isAdmin === true;
+      const isAdmin = isAdminUser(response.data.data);
       if (!isAdmin) {
         res.status(403).json({ error: 'Forbidden: admin access required' });
         return false;

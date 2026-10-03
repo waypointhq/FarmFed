@@ -199,6 +199,17 @@ export const hasPermissionToViewData = currentUser => {
 export const isUserAuthorized = currentUser => currentUser?.attributes?.state === 'active';
 
 /**
+ * Check if currentUser is a FarmFed admin. The flag lives in profile.metadata,
+ * which only the operator can write; privateData is user-writable and must not
+ * be trusted for this.
+ *
+ * @param {Object} currentUser API entity.
+ * @returns {Boolean} true if currentUser is an admin.
+ */
+export const isAdminUser = currentUser =>
+  currentUser?.attributes?.profile?.metadata?.isAdmin === true;
+
+/**
  * Get the user type configuration for the current user's user type
  * @param {*} config marketplace configuration
  * @param {*} currentUser API entity

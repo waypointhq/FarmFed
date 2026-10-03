@@ -161,7 +161,7 @@
   "CartCheckoutPage.deliveryOrderLabel": "Delivery",
   "CartCheckoutPage.deliveryEstimateFailed": "Unable to estimate delivery fee. Please check your address.",
   "CartCheckoutPage.deliveryFeeHint": "Enter your delivery address below to see the delivery fee — it's calculated from the distance between each vendor and your address.",
-  "CartCheckoutPage.marketplaceFee": "FarmFed fee",
+  "CartCheckoutPage.marketplaceFee": "Service fee",
   "CartCheckoutPage.processingFee": "Card processing ({count} × {fee})",
   "CartCheckoutPage.estimatingDelivery": "Calculating...",
   "CartCheckoutPage.total": "Total",
@@ -2017,5 +2017,7 @@
   "AdminPage.promos.gift.newGroup": "New gift promo (one shared code)",
   "AdminPage.promos.gift.newGroupHint": "Creates one code only these customers can use, with their own free deliveries each.",
   "AdminPage.promos.gift.sendTo": "Send Gift to {count} customers",
-  "AdminPage.promos.gift.confirmMany": "Send free delivery to {count} customers? Each gets the email and notification right away."
+  "AdminPage.promos.gift.confirmMany": "Send free delivery to {count} customers? Each gets the email and notification right away.",
+  "TopbarDesktop.settingsLink": "Settings",
+  "TopbarMobileMenu.settingsLink": "Settings"
 }

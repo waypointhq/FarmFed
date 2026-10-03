@@ -6,6 +6,7 @@ import { ACCOUNT_SETTINGS_PAGES } from '../../../../routing/routeConfiguration';
 import {
   Avatar,
   CartIcon,
+  IconSettings,
   InlineTextButton,
   LinkedLogo,
   Menu,
@@ -72,6 +73,11 @@ const ProfileMenu = ({
       page === 'AccountSettingsPage' && ACCOUNT_SETTINGS_PAGES.includes(currentPage);
     return currentPage === page || isAccountSettingsPage ? css.currentPage : null;
   };
+  // Profile and account settings sit behind one gear; their pages link to
+  // each other with tabs.
+  const isSettingsPage =
+    currentPage === 'ProfileSettingsPage' || ACCOUNT_SETTINGS_PAGES.includes(currentPage);
+  const settingsLabel = intl.formatMessage({ id: 'TopbarDesktop.settingsLink' });
 
   return (
     <Menu skipFocusOnNavigation={true}>
@@ -85,6 +91,21 @@ const ProfileMenu = ({
         {promoUnseenCount > 0 ? <span className={css.avatarDot} /> : null}
       </MenuLabel>
       <MenuContent className={css.profileMenuContent}>
+        <MenuItem key="SettingsHeader">
+          <div className={css.menuHeader}>
+            <span className={css.menuHeaderName}>
+              {currentUser?.attributes?.profile?.displayName}
+            </span>
+            <NamedLink
+              name="ProfileSettingsPage"
+              className={classNames(css.settingsLink, { [css.settingsLinkActive]: isSettingsPage })}
+              ariaLabel={settingsLabel}
+              title={settingsLabel}
+            >
+              <IconSettings />
+            </NamedLink>
+          </div>
+        </MenuItem>
         {showManageListingsLink ? (
           <MenuItem key="ManageListingsPage">
             <NamedLink
@@ -135,24 +156,6 @@ const ProfileMenu = ({
             <span className={css.menuItemBorder} />
             <FormattedMessage id="TopbarDesktop.myPromosLink" />
             {promoUnseenCount > 0 ? <span className={css.menuItemDot} /> : null}
-          </NamedLink>
-        </MenuItem>
-        <MenuItem key="ProfileSettingsPage">
-          <NamedLink
-            className={classNames(css.menuLink, currentPageClass('ProfileSettingsPage'))}
-            name="ProfileSettingsPage"
-          >
-            <span className={css.menuItemBorder} />
-            <FormattedMessage id="TopbarDesktop.profileSettingsLink" />
-          </NamedLink>
-        </MenuItem>
-        <MenuItem key="AccountSettingsPage">
-          <NamedLink
-            className={classNames(css.menuLink, currentPageClass('AccountSettingsPage'))}
-            name="AccountSettingsPage"
-          >
-            <span className={css.menuItemBorder} />
-            <FormattedMessage id="TopbarDesktop.accountSettingsLink" />
           </NamedLink>
         </MenuItem>
         <MenuItem key="logout">

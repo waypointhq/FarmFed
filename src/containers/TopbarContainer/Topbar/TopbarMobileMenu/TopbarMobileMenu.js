@@ -6,12 +6,13 @@ import React from 'react';
 import classNames from 'classnames';
 
 import { ACCOUNT_SETTINGS_PAGES } from '../../../../routing/routeConfiguration';
-import { FormattedMessage } from '../../../../util/reactIntl';
+import { FormattedMessage, useIntl } from '../../../../util/reactIntl';
 import { ensureCurrentUser } from '../../../../util/data';
 
 import {
   AvatarLarge,
   ExternalLink,
+  IconSettings,
   InlineTextButton,
   NamedLink,
   NotificationBadge,
@@ -84,6 +85,7 @@ const TopbarMobileMenu = props => {
     onLogout,
     showCreateListingsLink,
   } = props;
+  const intl = useIntl();
 
   const user = ensureCurrentUser(currentUser);
 
@@ -149,6 +151,8 @@ const TopbarMobileMenu = props => {
     ) : null;
 
   const displayName = user.attributes.profile.firstName;
+  const isSettingsPage =
+    currentPage === 'ProfileSettingsPage' || ACCOUNT_SETTINGS_PAGES.includes(currentPage);
   const currentPageClass = page => {
     const isAccountSettingsPage =
       page === 'AccountSettingsPage' && ACCOUNT_SETTINGS_PAGES.includes(currentPage);
@@ -168,9 +172,20 @@ const TopbarMobileMenu = props => {
     <div className={css.root}>
       <AvatarLarge className={css.avatar} user={currentUser} />
       <div className={css.content}>
-        <span className={css.greeting}>
-          <FormattedMessage id="TopbarMobileMenu.greeting" values={{ displayName }} />
-        </span>
+        <div className={css.greetingRow}>
+          <span className={css.greeting}>
+            <FormattedMessage id="TopbarMobileMenu.greeting" values={{ displayName }} />
+          </span>
+          {/* Profile and account settings sit behind one gear; their pages
+              link to each other with tabs. */}
+          <NamedLink
+            name="ProfileSettingsPage"
+            className={classNames(css.settingsLink, { [css.settingsLinkActive]: isSettingsPage })}
+            ariaLabel={intl.formatMessage({ id: 'TopbarMobileMenu.settingsLink' })}
+          >
+            <IconSettings />
+          </NamedLink>
+        </div>
         <InlineTextButton rootClassName={css.logoutButton} onClick={onLogout}>
           <FormattedMessage id="TopbarMobileMenu.logoutLink" />
         </InlineTextButton>
@@ -206,16 +221,6 @@ const TopbarMobileMenu = props => {
             <NamedLink name="MyPromosPage">
               <FormattedMessage id="TopbarMobileMenu.myPromosLink" />
               {promoUnseenCount > 0 ? <span className={css.promoDot} /> : null}
-            </NamedLink>
-          </li>
-          <li className={classNames(css.navigationLink, currentPageClass('ProfileSettingsPage'))}>
-            <NamedLink name="ProfileSettingsPage">
-              <FormattedMessage id="TopbarMobileMenu.profileSettingsLink" />
-            </NamedLink>
-          </li>
-          <li className={classNames(css.navigationLink, currentPageClass('AccountSettingsPage'))}>
-            <NamedLink name="AccountSettingsPage">
-              <FormattedMessage id="TopbarMobileMenu.accountSettingsLink" />
             </NamedLink>
           </li>
         </ul>

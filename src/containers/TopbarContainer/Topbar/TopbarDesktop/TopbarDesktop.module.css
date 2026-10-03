@@ -335,3 +335,47 @@
   margin-left: 8px;
   vertical-align: middle;
 }
+
+/* Name and settings gear at the top of the profile menu. */
+.menuHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 276px;
+  padding: 0 16px 12px 24px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--colorGrey100);
+}
+
+.menuHeaderName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey900);
+}
+
+.settingsLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--colorGrey700);
+  transition: var(--transitionStyleButton);
+
+  &:hover {
+    color: var(--colorBlack);
+    background-color: var(--colorGrey50);
+    text-decoration: none;
+  }
+}
+
+.settingsLinkActive {
+  color: var(--colorBlack);
+  background-color: var(--colorGrey50);
+}

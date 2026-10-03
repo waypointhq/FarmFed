@@ -195,3 +195,48 @@
   background-color: var(--colorFail);
   vertical-align: middle;
 }
+
+/* Greeting with the settings gear at its right. */
+.greetingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  align-self: stretch;
+  margin-top: 16px;
+
+  @media (--viewportMedium) {
+    margin-top: 24px;
+  }
+
+  & .greeting {
+    margin-top: 0;
+  }
+}
+
+.settingsLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--colorGrey700);
+
+  & svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  &:hover {
+    color: var(--colorBlack);
+    background-color: var(--colorGrey50);
+    text-decoration: none;
+  }
+}
+
+.settingsLinkActive {
+  color: var(--colorBlack);
+  background-color: var(--colorGrey50);
+}

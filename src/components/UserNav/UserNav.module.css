@@ -1,13 +1,19 @@
 @import '../../styles/customMediaQueries.css';
 
 .root {
-  display: none;
+  /* Shown on phones too: it's the only way between Profile and Account
+     settings once both sit behind the menu's settings gear. */
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-end;
+  gap: 24px;
+  height: 48px;
+  padding: 0 16px;
 
   @media (--viewportMedium) {
-    display: flex;
     justify-content: flex-end;
+    gap: 0;
     height: 57px;
-    align-items: flex-end;
     padding: 13px 24px 0 24px;
   }
 
@@ -18,8 +24,10 @@
 
 .tab {
   display: flex;
+  flex-shrink: 0;
   align-items: flex-end;
   height: 100%;
+  white-space: nowrap;
 
   &:first-child {
     margin-left: 0;

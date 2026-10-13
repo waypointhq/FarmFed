@@ -77,6 +77,7 @@ import SearchFiltersMobile from './SearchFiltersMobile/SearchFiltersMobile';
 import SortBy from './SortBy/SortBy';
 import SearchResultsPanel from './SearchResultsPanel/SearchResultsPanel';
 import NoSearchResultsMaybe from './NoSearchResultsMaybe/NoSearchResultsMaybe';
+import VendorMatches from './VendorMatches/VendorMatches';
 
 import css from './SearchPage.module.css';
 
@@ -541,6 +542,7 @@ export class SearchPageComponent extends Component {
               />
               <AnnouncementBanner />
               <VendorBulletin bulletins={bulletins} />
+              <VendorMatches keywords={rawUrlQueryParams.keywords} />
               <div
                 className={classNames(css.listingsForGridVariant, {
                   [css.newSearchInProgress]: !(listingsAreLoaded || searchListingsError),

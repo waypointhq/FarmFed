@@ -61,6 +61,7 @@ const adminOrdersPendingAcceptance = require('./api/admin/orders-pending-accepta
 const adminAcceptOrder = require('./api/admin/accept-order');
 const adminPromos = require('./api/admin/promos');
 const promos = require('./api/promos');
+const searchVendors = require('./api/search-vendors');
 const adminSendPush = require('./api/admin/send-push');
 const {
   getHandler: getAnnouncements,
@@ -247,6 +248,9 @@ router.post('/admin/promos/:id/archive', adminPromos.archive);
 router.post('/admin/promos/:id/revoke', adminPromos.revoke);
 router.get('/admin/customers', adminPromos.searchCustomers);
 router.get('/admin/customers/:id/promos', adminPromos.customerPromos);
+
+// Search bar: matching shops (vendor profiles)
+router.get('/search-vendors', searchVendors);
 
 // Free-delivery promos: customers
 router.get('/promos/mine', promos.mine);

@@ -88,6 +88,22 @@ const CustomLandingPage = props => {
 
   return (
     <div className={css.root}>
+      {/* Delivery day, price and cut-off. The wording lives in Marketplace
+          texts (Console) so it can change with the schedule without a deploy. */}
+      <section className={css.deliveryBanner}>
+        <span className={css.deliveryBannerIcon}>
+          <IconTruck />
+        </span>
+        <span className={css.deliveryBannerText}>
+          <span className={css.deliveryBannerTitle}>
+            <FormattedMessage id="LandingPage.deliveryBannerTitle" />
+          </span>
+          <span className={css.deliveryBannerCutoff}>
+            <FormattedMessage id="LandingPage.deliveryBannerCutoff" />
+          </span>
+        </span>
+      </section>
+
       {/* (a) Hero */}
       <section className={css.hero}>
         <div className={css.heroContent}>

@@ -95,7 +95,7 @@
 
   &:hover,
   &:focus {
-    border-bottom-color: var(--marketplaceColor);
+    border-bottom-color: var(--colorFarmFedTan);
     outline: none;
     border: 0;
     box-shadow: none;
@@ -201,7 +201,7 @@
   display: flex;
   width: 24px;
   align-self: stretch;
-  border-bottom: 2px solid var(--marketplaceColor);
+  border-bottom: 2px solid var(--colorFarmFedTan);
   background-color: var(--colorWhite);
 }
 
@@ -210,7 +210,7 @@
 }
 
 .iconSvgGroup {
-  stroke: var(--marketplaceColor);
+  stroke: var(--colorFarmFedTan);
   stroke-width: 2.5px;
 
   @media (--viewportMedium) {

@@ -687,6 +687,8 @@
   "LandingPage.badge.fastDelivery": "Same-Week Delivery",
   "LandingPage.badge.locallyGrown": "Locally Grown",
   "LandingPage.farmerCta": "Are you interested in becoming a vendor? Click here",
+  "LandingPage.deliveryBannerTitle": "Saturday Delivery – $9.99",
+  "LandingPage.deliveryBannerCutoff": "Order by Thursday at 6 PM",
   "LandingPage.featuredEmpty": "Fresh products are on their way — check back soon.",
   "LandingPage.featuredTitle": "Featured Products",
   "LandingPage.heroCta": "Shop Now",
@@ -2019,5 +2021,7 @@
   "AdminPage.promos.gift.sendTo": "Send Gift to {count} customers",
   "AdminPage.promos.gift.confirmMany": "Send free delivery to {count} customers? Each gets the email and notification right away.",
   "TopbarDesktop.settingsLink": "Settings",
-  "TopbarMobileMenu.settingsLink": "Settings"
+  "TopbarMobileMenu.settingsLink": "Settings",
+  "SearchPage.vendorMatches.title": "Shops matching “{keywords}”",
+  "SearchPage.vendorMatches.viewShop": "View shop ›"
 }

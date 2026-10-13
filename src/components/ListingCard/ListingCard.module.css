@@ -52,7 +52,7 @@
 .priceValue {
   /* Font */
   font-weight: var(--fontWeightSemiBold);
-  color: var(--marketplaceColor);
+  color: var(--colorFarmFedTan);
 
   /* Remove default margins from font */
   margin-top: 0;
@@ -131,10 +131,10 @@
   width: 32px;
   height: 32px;
   padding: 0;
-  border: none;
+  border: 2px solid var(--colorFarmFedOlive);
   border-radius: 50%;
-  background-color: var(--marketplaceColor);
-  color: var(--colorWhite);
+  background-color: var(--colorWhite);
+  color: var(--colorFarmFedOlive);
   cursor: pointer;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
   transition: transform 0.12s ease, opacity 0.12s ease;

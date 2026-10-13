@@ -142,40 +142,21 @@
 }
 
 .listings {
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
+  /* Two columns on every screen, phones included: a shop reads like a
+     storefront rather than a long single-file list. */
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px 12px;
+  margin: 18px 0 0 0;
+
+  @media (--viewportMedium) {
+    gap: 36px 24px;
+    margin-top: 20px;
+  }
 }
 
 .listing {
-  width: 100%;
-
-  /* Single column in mobile */
-  margin-top: 34px;
-  &:first-of-type {
-    margin-top: 18px;
-  }
-
-  @media (--viewportMedium) {
-    /* Two columns in desktop */
-    width: calc(50% - 12px);
-    margin-bottom: 36px;
-
-    /* Horizontal space */
-    &:nth-of-type(odd) {
-      margin-right: 12px;
-    }
-    &:nth-of-type(even) {
-      margin-left: 12px;
-    }
-
-    /* Vertical space */
-    margin-top: 0;
-    &:nth-of-type(1),
-    &:nth-of-type(2) {
-      margin-top: 20px;
-    }
-  }
+  min-width: 0;
 }
 
 .mobileReviewsTitle {

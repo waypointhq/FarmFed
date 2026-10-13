@@ -5,6 +5,60 @@
   flex-direction: column;
 }
 
+/* ================= Delivery banner ================= */
+
+.deliveryBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background-color: var(--colorFarmFedTan);
+  color: var(--colorWhite);
+  text-align: center;
+
+  @media (--viewportMedium) {
+    padding: 12px 24px;
+  }
+}
+
+.deliveryBannerIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--colorWhite);
+}
+
+.deliveryBannerText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+
+  @media (--viewportMedium) {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 14px;
+  }
+}
+
+.deliveryBannerTitle {
+  font-size: 16px;
+  font-weight: var(--fontWeightBold);
+
+  @media (--viewportMedium) {
+    font-size: 18px;
+  }
+}
+
+.deliveryBannerCutoff {
+  font-size: 13px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorFarmFedSage);
+
+  @media (--viewportMedium) {
+    font-size: 15px;
+  }
+}
+
 /* ================= (a) Hero ================= */
 
 .hero {
@@ -121,7 +175,7 @@
 
 .badgeIcon {
   display: inline-flex;
-  color: var(--marketplaceColor);
+  color: var(--colorFarmFedSage);
 }
 
 .badgeLabel {
@@ -167,7 +221,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: var(--marketplaceColor);
+  color: var(--colorFarmFedTan);
   font-size: 14px;
   font-weight: var(--fontWeightMedium);
   text-decoration: none;

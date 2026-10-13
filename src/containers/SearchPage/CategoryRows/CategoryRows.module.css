@@ -83,11 +83,11 @@
   font-size: 14px;
   line-height: 20px;
   font-weight: var(--fontWeightMedium);
-  color: var(--marketplaceColor);
+  color: var(--colorFarmFedTan);
   text-decoration: none;
 
   &:hover {
-    color: var(--marketplaceColorDark);
+    color: var(--colorFarmFedTanDark);
     text-decoration: underline;
   }
 }

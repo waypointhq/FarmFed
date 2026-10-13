@@ -60,6 +60,17 @@
   --marketplaceColorLight: #4a12e2; /* hsl(256, 85%, 48%) */
   --marketplaceColorDark: #8d68f3; /* hsl(256, 85%, 68% */
 
+  /**
+   * Farm Fed's own palette (set by the client, not by hosted config).
+   * Tan: prices, search bar, banners, "see all" links.
+   * Sage: delivery cut-off text, homepage emblems.
+   * Olive: quick-add buttons.
+   */
+  --colorFarmFedTan: #a47f57;
+  --colorFarmFedTanDark: #876743;
+  --colorFarmFedSage: #c5d598;
+  --colorFarmFedOlive: #657420;
+
   /** 
    * The fill color used by <PrimaryButton>
    * These might be overwritten by values from hosted assets

@@ -70,6 +70,7 @@ import SearchFiltersMobile from './SearchFiltersMobile/SearchFiltersMobile';
 import SortBy from './SortBy/SortBy';
 import SearchResultsPanel from './SearchResultsPanel/SearchResultsPanel';
 import NoSearchResultsMaybe from './NoSearchResultsMaybe/NoSearchResultsMaybe';
+import VendorMatches from './VendorMatches/VendorMatches';
 
 import css from './SearchPage.module.css';
 
@@ -622,6 +623,7 @@ export class SearchPageComponent extends Component {
             </MainPanelHeader>
             <AnnouncementBanner />
             <VendorBulletin bulletins={bulletins} />
+            <VendorMatches keywords={parse(location.search).keywords} />
             {isSecondaryFiltersOpen ? (
               <div className={classNames(css.searchFiltersPanel)}>
                 <SearchFiltersSecondary

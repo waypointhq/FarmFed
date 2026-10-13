@@ -657,3 +657,10 @@ export const adminSearchCustomers = q =>
 export const adminFetchAllCustomers = () => jsonRequest('/api/admin/customers?all=1');
 export const adminFetchCustomerPromos = userId =>
   jsonRequest(`/api/admin/customers/${encodeURIComponent(userId)}/promos`);
+
+// Shops whose name or bio matches a search (public profile fields only).
+export const searchVendors = q =>
+  request(`/api/search-vendors?q=${encodeURIComponent(q)}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });

@@ -22,7 +22,7 @@
 .seeAll {
   font-size: 14px;
   font-weight: var(--fontWeightMedium);
-  color: var(--marketplaceColor);
+  color: var(--colorFarmFedTan);
 }
 
 .cards {

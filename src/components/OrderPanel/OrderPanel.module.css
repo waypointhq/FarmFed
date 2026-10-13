@@ -68,11 +68,11 @@
   }
 }
 .priceValue {
-  color: var(--marketplaceColor);
+  color: var(--colorFarmFedTan);
 }
 
 .perUnit {
-  color: var(--marketplaceColor);
+  color: var(--colorFarmFedTan);
 }
 
 .author {
@@ -232,7 +232,7 @@
 .priceValueInCTA {
   /* Font */
   composes: h3 from global;
-  color: var(--marketplaceColor);
+  color: var(--colorFarmFedTan);
 
   margin-top: 0;
   margin-bottom: 0px;

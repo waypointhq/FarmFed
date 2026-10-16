@@ -258,7 +258,16 @@ export const ListingCard = props => {
           }
         : null,
     };
-    dispatch(addItem({ listingId: id, listing: listingSnapshot, quantity: 1, deliveryMethod: null }));
+    dispatch(
+      addItem({
+        listingId: id,
+        listing: listingSnapshot,
+        quantity: 1,
+        deliveryMethod: null,
+        // Search results don't include stock; the cart re-checks it on open.
+        maxQuantity: currentStock,
+      })
+    );
     dispatch(openCartPanel());
   };
 

@@ -301,6 +301,7 @@ export const handleSubmit = parameters => values => {
         listing: listingSnapshot,
         quantity: quantityMaybe.quantity || 1,
         deliveryMethod: deliveryMethod || null,
+        maxQuantity: listing.currentStock?.attributes?.quantity,
       })
     );
 

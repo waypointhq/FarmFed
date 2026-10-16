@@ -9,9 +9,18 @@ import {
   redeemPromo,
   confirmPromo,
 } from '../../util/api';
-import { storableError } from '../../util/errors';
+import {
+  storableError,
+  isTransactionInitiateListingInsufficientStockError,
+} from '../../util/errors';
 import * as log from '../../util/log';
-import { clearCart, removeItems } from '../../ducks/cart.duck';
+import {
+  clearCart,
+  removeItems,
+  applyStock,
+  fetchCartStock,
+  refreshCartStock,
+} from '../../ducks/cart.duck';
 import { setCurrentUserHasOrders } from '../../ducks/user.duck';
 
 // The operator/hub-owned "Delivery" listing that standalone delivery
@@ -59,6 +68,22 @@ const processCartCheckoutPayloadCreator = async (
 ) => {
   const results = [];
   let paymentMethodId = savedPaymentMethodId || null;
+
+  // Check stock before anything is charged. Asking for more than the vendor
+  // has makes Sharetribe refuse that item at payment, which used to stop the
+  // checkout with "Payment declined". Fix the cart and let the buyer confirm.
+  // If the check itself fails, carry on: Sharetribe still enforces stock.
+  const stock = await fetchCartStock(sdk, cartItems.map(item => item.listingId));
+  if (stock) {
+    dispatch(applyStock(stock));
+    const shortItems = cartItems.filter(item => {
+      const available = stock[item.listingId];
+      return typeof available === 'number' && (item.quantity || 1) > available;
+    });
+    if (shortItems.length > 0) {
+      return rejectWithValue({ stockError: { refunded: false } });
+    }
+  }
 
   // If using a new card, create a SetupIntent to save it as a reusable PaymentMethod.
   // This is the proper Stripe Connect flow: the PM is created on the platform account
@@ -373,11 +398,13 @@ const processCartCheckoutPayloadCreator = async (
         listingId: item.listingId,
         reason: realErrorMessage(e),
       });
+      // Sold out between the stock check above and now.
+      const isStockError = isTransactionInitiateListingInsufficientStockError(storableError(e));
       results.push({
         listingId: item.listingId,
         title: item.listing?.attributes?.title,
         success: false,
-        error: realErrorMessage(e) || 'Transaction failed',
+        error: isStockError ? 'Not enough left in stock' : realErrorMessage(e) || 'Transaction failed',
       });
 
       // Stop the whole checkout on any payment failure, and unwind what was
@@ -414,6 +441,13 @@ const processCartCheckoutPayloadCreator = async (
       // Anything refunded is no longer a completed order, so the results view
       // must not show it as one.
       const refunded = new Set(refundedIds);
+
+      // Out of stock with nothing left charged: the cart is intact, so update
+      // its quantities and keep the buyer on the form to try again.
+      if (isStockError && chargedOrderIds.every(id => refunded.has(id))) {
+        await dispatch(refreshCartStock());
+        return rejectWithValue({ stockError: { refunded: chargedOrderIds.length > 0 } });
+      }
       const finalResults = results.map(r =>
         r.success && refunded.has(r.orderId)
           ? { ...r, success: false, refunded: true, error: 'Refunded — checkout could not be completed' }
@@ -658,6 +692,10 @@ const initialState = {
   // Set when the applied promo stopped working at Place Order; nothing was
   // charged and the buyer confirms the new total.
   promoError: null,
+  // Set when the cart asked for more than is in stock. The cart has been
+  // updated to what's available; { refunded } says whether items already
+  // charged in this attempt were refunded.
+  stockError: null,
 };
 
 const cartCheckoutSlice = createSlice({
@@ -680,6 +718,7 @@ const cartCheckoutSlice = createSlice({
         state.completedResults = null;
         state.checkoutError = null;
         state.promoError = null;
+        state.stockError = null;
       })
       .addCase(processCartCheckout.fulfilled, (state, action) => {
         state.checkoutInProgress = false;
@@ -690,6 +729,11 @@ const cartCheckoutSlice = createSlice({
         if (action.payload?.promoError) {
           // Nothing was charged: stay on the form, not the results view.
           state.promoError = action.payload.promoError;
+          return;
+        }
+        if (action.payload?.stockError) {
+          // Nothing left charged: stay on the form with the updated cart.
+          state.stockError = action.payload.stockError;
           return;
         }
         state.checkoutError = action.payload?.error || 'Checkout failed';

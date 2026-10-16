@@ -6,7 +6,7 @@ import { useConfiguration } from '../../context/configurationContext';
 import { useRouteConfiguration } from '../../context/routeConfigurationContext';
 import { useIntl } from '../../util/reactIntl';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
-import { getCartItems } from '../../ducks/cart.duck';
+import { getCartItems, refreshCartStock, removeItem } from '../../ducks/cart.duck';
 import { fetchCurrentUser } from '../../ducks/user.duck';
 
 import { Page, LayoutSingleColumn } from '../../components';
@@ -32,6 +32,8 @@ export const CartCheckoutPageComponent = props => {
     onClearPromoError,
     onResetCheckout,
     onFetchCurrentUser,
+    onRefreshCartStock,
+    onRemoveCartItem,
     currentUser,
   } = props;
 
@@ -46,6 +48,7 @@ export const CartCheckoutPageComponent = props => {
       updateHasListings: false,
       updateNotifications: false,
     });
+    onRefreshCartStock();
     return () => {
       onResetCheckout();
     };
@@ -64,6 +67,7 @@ export const CartCheckoutPageComponent = props => {
           checkoutState={checkoutState}
           onProcessCheckout={onProcessCheckout}
           onClearPromoError={onClearPromoError}
+          onRemoveCartItem={onRemoveCartItem}
           currentUser={currentUser}
           stripeCustomer={currentUser?.stripeCustomer}
           config={config}
@@ -90,6 +94,8 @@ const mapDispatchToProps = dispatch => ({
   onResetCheckout: () => dispatch(resetCheckout()),
   onClearPromoError: () => dispatch(clearPromoError()),
   onFetchCurrentUser: params => dispatch(fetchCurrentUser(params)),
+  onRefreshCartStock: () => dispatch(refreshCartStock()),
+  onRemoveCartItem: listingId => dispatch(removeItem({ listingId })),
 });
 
 const CartCheckoutPage = compose(

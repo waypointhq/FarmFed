@@ -5,6 +5,8 @@ import reducer, {
   updateQuantity,
   clearCart,
   removeItems,
+  applyStock,
+  fetchCartStock,
   openCartPanel,
   closeCartPanel,
   toggleCartPanel,
@@ -208,6 +210,115 @@ describe('cart duck', () => {
 
       const stored = JSON.parse(localStorageMock.getItem('farmfed_cart'));
       expect(stored).toEqual([]);
+    });
+  });
+
+  describe('stock limits', () => {
+    const init = () => reducer(undefined, { type: '@@INIT' });
+
+    it('caps a new item at the known stock', () => {
+      const state = reducer(
+        init(),
+        addItem({ listingId: 'l1', listing: makeListing('l1'), quantity: 5, maxQuantity: 2 })
+      );
+      expect(state.items[0].quantity).toBe(2);
+      expect(state.items[0].maxQuantity).toBe(2);
+    });
+
+    it('caps an existing item when more is added', () => {
+      let state = reducer(
+        init(),
+        addItem({ listingId: 'l1', listing: makeListing('l1'), quantity: 3, maxQuantity: 4 })
+      );
+      state = reducer(state, addItem({ listingId: 'l1', listing: makeListing('l1'), quantity: 3 }));
+      expect(state.items[0].quantity).toBe(4);
+    });
+
+    it('caps quantity changes in the cart at the known stock', () => {
+      let state = reducer(
+        init(),
+        addItem({ listingId: 'l1', listing: makeListing('l1'), quantity: 1, maxQuantity: 3 })
+      );
+      state = reducer(state, updateQuantity({ listingId: 'l1', quantity: 10 }));
+      expect(state.items[0].quantity).toBe(3);
+    });
+
+    it('lowers quantities to fresh stock and leaves other items alone', () => {
+      let state = init();
+      state = reducer(state, addItem({ listingId: 'l1', listing: makeListing('l1'), quantity: 6 }));
+      state = reducer(state, addItem({ listingId: 'l2', listing: makeListing('l2'), quantity: 2 }));
+      state = reducer(state, applyStock({ l1: 4 }));
+
+      expect(state.items[0]).toEqual(expect.objectContaining({ quantity: 4, maxQuantity: 4 }));
+      expect(state.items[1].quantity).toBe(2);
+      expect(state.items[1].maxQuantity).toBeUndefined();
+      expect(JSON.parse(localStorageMock.getItem('farmfed_cart'))[0].quantity).toBe(4);
+    });
+
+    it('marks a sold-out item without dropping its quantity below 1', () => {
+      let state = reducer(init(), addItem({ listingId: 'l1', listing: makeListing('l1'), quantity: 2 }));
+      state = reducer(state, applyStock({ l1: 0 }));
+      expect(state.items[0]).toEqual(expect.objectContaining({ quantity: 1, maxQuantity: 0 }));
+    });
+
+    it('removes the cap from a listing that no longer tracks stock', () => {
+      let state = reducer(
+        init(),
+        addItem({ listingId: 'l1', listing: makeListing('l1'), quantity: 1, maxQuantity: 2 })
+      );
+      state = reducer(state, applyStock({ l1: null }));
+      state = reducer(state, updateQuantity({ listingId: 'l1', quantity: 9 }));
+      expect(state.items[0].quantity).toBe(9);
+    });
+  });
+
+  describe('fetchCartStock', () => {
+    const listingWithStock = (id, quantity) => ({
+      id: { uuid: id },
+      type: 'listing',
+      attributes: { title: id },
+      relationships:
+        quantity === undefined
+          ? {}
+          : { currentStock: { data: { id: { uuid: `stock-${id}` }, type: 'stock' } } },
+    });
+    const stockEntity = (id, quantity) => ({
+      id: { uuid: `stock-${id}` },
+      type: 'stock',
+      attributes: { quantity },
+    });
+
+    it('returns stock per listing, 0 for unlisted and null for untracked', async () => {
+      const sdk = {
+        listings: {
+          query: jest.fn(() =>
+            Promise.resolve({
+              data: {
+                data: [listingWithStock('l1', 3), listingWithStock('l2')],
+                included: [stockEntity('l1', 3)],
+              },
+            })
+          ),
+        },
+      };
+
+      const stock = await fetchCartStock(sdk, ['l1', 'l2', 'gone']);
+
+      expect(stock).toEqual({ l1: 3, l2: null, gone: 0 });
+      expect(sdk.listings.query).toHaveBeenCalledWith(
+        expect.objectContaining({ ids: ['l1', 'l2', 'gone'], include: ['currentStock'] })
+      );
+    });
+
+    it('returns null when stock cannot be fetched', async () => {
+      const sdk = { listings: { query: jest.fn(() => Promise.reject(new Error('offline'))) } };
+      expect(await fetchCartStock(sdk, ['l1'])).toBeNull();
+    });
+
+    it('skips the request for an empty cart', async () => {
+      const sdk = { listings: { query: jest.fn() } };
+      expect(await fetchCartStock(sdk, [])).toEqual({});
+      expect(sdk.listings.query).not.toHaveBeenCalled();
     });
   });
 });

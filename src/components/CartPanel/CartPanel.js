@@ -107,6 +107,8 @@ const CartPanel = props => {
   const currency = items[0]?.listing?.attributes?.price?.currency || 'USD';
   const formattedSubtotal = subtotal > 0 ? formatMoney(intl, new Money(subtotal, currency)) : null;
 
+  const hasSoldOutItems = items.some(item => item.maxQuantity === 0);
+
   const handleCheckout = () => {
     mediumImpact();
     onClose();
@@ -173,7 +175,17 @@ const CartPanel = props => {
                   <span className={css.subtotalAmount}>{formattedSubtotal}</span>
                 </div>
               ) : null}
-              <button className={css.checkoutButton} onClick={handleCheckout} type="button">
+              {hasSoldOutItems ? (
+                <p className={css.soldOutNotice}>
+                  <FormattedMessage id="CartPanel.removeSoldOutItems" />
+                </p>
+              ) : null}
+              <button
+                className={css.checkoutButton}
+                onClick={handleCheckout}
+                type="button"
+                disabled={hasSoldOutItems}
+              >
                 <FormattedMessage id="CartPanel.checkoutButton" />
               </button>
               <button className={css.continueShoppingButton} onClick={onClose} type="button">

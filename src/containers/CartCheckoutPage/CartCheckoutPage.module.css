@@ -113,6 +113,29 @@
   margin-top: 2px;
 }
 
+.cartItemStockNote {
+  font-size: 12px;
+  color: var(--colorAttention);
+  margin-top: 2px;
+}
+
+.cartItemSoldOut {
+  font-size: 12px;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorFail);
+  margin-top: 2px;
+}
+
+.cartItemRemove {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 12px;
+  color: var(--colorFail);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .cartItemTotal {
   font-size: 14px;
   font-weight: var(--fontWeightMedium);

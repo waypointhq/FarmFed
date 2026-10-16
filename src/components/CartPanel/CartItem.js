@@ -13,7 +13,7 @@ const { Money } = sdkTypes;
 
 const CartItem = props => {
   const { item, intl, onRemove, onUpdateQuantity } = props;
-  const { listing, quantity, deliveryMethod, listingId } = item;
+  const { listing, quantity, deliveryMethod, listingId, maxQuantity } = item;
 
   const title = listing?.attributes?.title || '';
   const price = listing?.attributes?.price;
@@ -23,6 +23,9 @@ const CartItem = props => {
 
   const formattedPrice = price ? formatMoney(intl, new Money(price.amount, price.currency)) : '';
   const deliveryLabel = deliveryMethod === 'shipping' ? 'Shipping' : deliveryMethod === 'pickup' ? 'Pickup' : null;
+  // maxQuantity is the stock last seen for this listing (see cart.duck); 0 = sold out.
+  const isSoldOut = maxQuantity === 0;
+  const isAtStockLimit = typeof maxQuantity === 'number' && quantity >= maxQuantity;
 
   const handleDecrement = () => {
     if (quantity > 1) {
@@ -31,7 +34,9 @@ const CartItem = props => {
   };
 
   const handleIncrement = () => {
-    onUpdateQuantity(listingId, quantity + 1);
+    if (!isAtStockLimit) {
+      onUpdateQuantity(listingId, quantity + 1);
+    }
   };
 
   return (
@@ -67,7 +72,12 @@ const CartItem = props => {
               -
             </button>
             <span className={css.quantity}>{quantity}</span>
-            <button className={css.quantityButton} onClick={handleIncrement} type="button">
+            <button
+              className={css.quantityButton}
+              onClick={handleIncrement}
+              type="button"
+              disabled={isAtStockLimit}
+            >
               +
             </button>
           </div>
@@ -75,6 +85,15 @@ const CartItem = props => {
             <FormattedMessage id="CartItem.remove" />
           </button>
         </div>
+        {isSoldOut ? (
+          <span className={css.soldOut}>
+            <FormattedMessage id="CartItem.soldOut" />
+          </span>
+        ) : isAtStockLimit ? (
+          <span className={css.stockNote}>
+            <FormattedMessage id="CartItem.onlyAvailable" values={{ count: maxQuantity }} />
+          </span>
+        ) : null}
       </div>
     </div>
   );

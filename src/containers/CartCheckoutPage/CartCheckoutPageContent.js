@@ -7,6 +7,7 @@ import { calculateCartFee, estimateCartDelivery, fetchPickupSettings, fetchActiv
 import appSettings from '../../config/settings';
 import { requestAppReviewAfterOrder } from '../../util/appReview';
 import { clearAppliedPromoCode, formatPromoDate, promoReasonMessageId } from '../../util/promos';
+import { isCartItemSoldOut, hasSoldOutCartItems } from '../../ducks/cart.duck';
 
 import { NamedLink, PrimaryButton } from '../../components';
 
@@ -44,14 +45,16 @@ const formatPickupDate = dateStr => {
   });
 };
 
-const CartItemRow = ({ item, intl }) => {
-  const { listing, quantity } = item;
+const CartItemRow = ({ item, intl, onRemove }) => {
+  const { listing, quantity, maxQuantity, listingId } = item;
   const title = listing?.attributes?.title || '';
   const price = listing?.attributes?.price;
   const formattedPrice = price ? formatMoney(intl, new Money(price.amount, price.currency)) : '';
   const lineTotal = price
     ? formatMoney(intl, new Money(price.amount * quantity, price.currency))
     : '';
+  const isSoldOut = isCartItemSoldOut(item);
+  const isAtStockLimit = !isSoldOut && typeof maxQuantity === 'number' && quantity >= maxQuantity;
 
   return (
     <div className={css.cartItemRow}>
@@ -60,8 +63,22 @@ const CartItemRow = ({ item, intl }) => {
         <span className={css.cartItemDetails}>
           {formattedPrice} x {quantity}
         </span>
+        {isSoldOut ? (
+          <span className={css.cartItemSoldOut}>
+            <FormattedMessage id="CartCheckoutPage.itemSoldOut" />{' '}
+            {onRemove ? (
+              <button type="button" className={css.cartItemRemove} onClick={() => onRemove(listingId)}>
+                <FormattedMessage id="CartCheckoutPage.removeItem" />
+              </button>
+            ) : null}
+          </span>
+        ) : isAtStockLimit ? (
+          <span className={css.cartItemStockNote}>
+            <FormattedMessage id="CartItem.onlyAvailable" values={{ count: maxQuantity }} />
+          </span>
+        ) : null}
       </div>
-      <span className={css.cartItemTotal}>{lineTotal}</span>
+      <span className={css.cartItemTotal}>{isSoldOut ? null : lineTotal}</span>
     </div>
   );
 };
@@ -72,6 +89,7 @@ const CartCheckoutPageContent = props => {
     checkoutState,
     onProcessCheckout,
     onClearPromoError,
+    onRemoveCartItem,
     currentUser,
     stripeCustomer,
     config,
@@ -233,8 +251,9 @@ const CartCheckoutPageContent = props => {
   // The promo stopped working at Place Order (nothing was charged): take it
   // off so the buyer sees the new total and can confirm. A temporary failure
   // to check it leaves it on to try again.
-  const { promoError } = checkoutState;
+  const { promoError, stockError } = checkoutState;
   const promoErrorIsTemporary = promoError?.reason === 'unavailable';
+  const hasSoldOutItems = hasSoldOutCartItems(cartItems || []);
   useEffect(() => {
     if (promoError && !promoErrorIsTemporary) promo.dropAfterFailedRedeem();
   }, [promoError]);
@@ -939,6 +958,24 @@ const CartCheckoutPageContent = props => {
           </div>
         ) : null}
 
+        {stockError && !checkoutInProgress ? (
+          <div className={css.errorMessage} role="alert">
+            <FormattedMessage
+              id={
+                stockError.refunded
+                  ? 'CartCheckoutPage.stockChangedRefunded'
+                  : 'CartCheckoutPage.stockChanged'
+              }
+            />
+          </div>
+        ) : null}
+
+        {hasSoldOutItems ? (
+          <div className={css.errorMessage}>
+            <FormattedMessage id="CartCheckoutPage.removeSoldOutItems" />
+          </div>
+        ) : null}
+
         {outsideZone && hasShippingItems ? (
           <div className={css.errorMessage}>
             <FormattedMessage
@@ -957,6 +994,7 @@ const CartCheckoutPageContent = props => {
           disabled={
             (paymentChoice === 'new' && !cardReady) ||
             checkoutInProgress ||
+            hasSoldOutItems ||
             ((shippingAvailable || pickupAvailable) && !selectedDeliveryMethod) ||
             // Out of area: the server would refuse this at initiate anyway, so
             // don't let them fill in a card first.
@@ -980,7 +1018,12 @@ const CartCheckoutPageContent = props => {
               <FormattedMessage id="CartCheckoutPage.orderSummary" />
             </h3>
             {cartItems.map(item => (
-              <CartItemRow key={item.listingId} item={item} intl={intl} />
+              <CartItemRow
+                key={item.listingId}
+                item={item}
+                intl={intl}
+                onRemove={onRemoveCartItem}
+              />
             ))}
             <PromoBanner promo={promo} />
             {showBreakdown ? (

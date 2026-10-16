@@ -149,6 +149,17 @@
   &:hover {
     background-color: var(--marketplaceColorDark);
   }
+
+  &:disabled {
+    background-color: var(--colorGrey300);
+    cursor: not-allowed;
+  }
+}
+
+.soldOutNotice {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--colorFail);
 }
 
 .continueShoppingButton {

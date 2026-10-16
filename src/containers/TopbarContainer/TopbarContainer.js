@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
@@ -14,6 +14,7 @@ import {
   closeCartPanel,
   removeItem,
   updateQuantity,
+  refreshCartStock,
 } from '../../ducks/cart.duck';
 import { manageDisableScrolling } from '../../ducks/ui.duck';
 
@@ -33,7 +34,13 @@ const Topbar = loadable(() => import(/* webpackChunkName: "Topbar" */ './Topbar/
  * @returns {JSX.Element}
  */
 export const TopbarContainerComponent = props => {
-  const { notificationCount = 0, hasGenericError, ...rest } = props;
+  const { notificationCount = 0, hasGenericError, onRefreshCartStock, ...rest } = props;
+
+  // Stock may have changed since items went into the cart; re-check whenever
+  // it opens so quantities are capped at what's actually available.
+  useEffect(() => {
+    if (rest.isCartOpen && onRefreshCartStock) onRefreshCartStock();
+  }, [rest.isCartOpen]);
 
   return (
     <Topbar notificationCount={notificationCount} showGenericError={hasGenericError} {...rest} />
@@ -82,6 +89,7 @@ const mapDispatchToProps = dispatch => ({
   onRemoveCartItem: listingId => dispatch(removeItem({ listingId })),
   onUpdateCartItemQuantity: (listingId, quantity) =>
     dispatch(updateQuantity({ listingId, quantity })),
+  onRefreshCartStock: () => dispatch(refreshCartStock()),
 });
 
 // Note: it is important that the withRouter HOC is **outside** the

@@ -50,7 +50,15 @@ const txResponse = id => ({
 });
 
 const runCheckout = args => {
-  const sdk = { transactions: { transition: jest.fn(() => Promise.resolve({})) } };
+  const sdk = {
+    transactions: { transition: jest.fn(() => Promise.resolve({})) },
+    // l1 doesn't track stock, so the pre-checkout stock check passes.
+    listings: {
+      query: jest.fn(() =>
+        Promise.resolve({ data: { data: [{ id: { uuid: 'l1' }, type: 'listing', attributes: {} }] } })
+      ),
+    },
+  };
   const stripe = { confirmCardPayment: jest.fn(() => Promise.resolve({})) };
   const dispatch = jest.fn(action => action);
   return processCartCheckout({

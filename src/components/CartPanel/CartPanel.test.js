@@ -110,4 +110,32 @@ describe('CartPanel', () => {
 
     expect(queryByText('CartPanel.checkoutButton')).not.toBeInTheDocument();
   });
+
+  it('stops the + button at the stock limit', () => {
+    const onUpdateQuantity = jest.fn();
+    const items = [{ ...makeItem('l1', 'Pork box', 2), maxQuantity: 2 }];
+
+    const { getByText } = render(
+      <CartPanel {...defaultProps} items={items} onUpdateQuantity={onUpdateQuantity} />,
+      { config: getDefaultConfiguration() }
+    );
+
+    const plus = getByText('+');
+    expect(plus).toBeDisabled();
+    plus.click();
+    expect(onUpdateQuantity).not.toHaveBeenCalled();
+    expect(getByText('CartItem.onlyAvailable')).toBeInTheDocument();
+  });
+
+  it('blocks checkout while a sold-out item is in the cart', () => {
+    const items = [makeItem('l1', 'Eggs', 1), { ...makeItem('l2', 'Pork box', 1), maxQuantity: 0 }];
+
+    const { getByText } = render(<CartPanel {...defaultProps} items={items} />, {
+      config: getDefaultConfiguration(),
+    });
+
+    expect(getByText('CartItem.soldOut')).toBeInTheDocument();
+    expect(getByText('CartPanel.removeSoldOutItems')).toBeInTheDocument();
+    expect(getByText('CartPanel.checkoutButton').closest('button')).toBeDisabled();
+  });
 });

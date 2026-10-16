@@ -1,4 +1,5 @@
 const { estimateDeliveryFee } = require('../api-util/deliveryFee');
+const { describeError } = require('../api-util/describeError');
 
 /**
  * POST /api/estimate-cart-delivery
@@ -19,7 +20,7 @@ module.exports = async (req, res) => {
 
     return res.json(await estimateDeliveryFee(shippingAddress));
   } catch (e) {
-    console.error('estimate-cart-delivery error:', e);
+    console.error('estimate-cart-delivery error:', describeError(e));
     return res.status(500).json({ error: 'Failed to estimate delivery' });
   }
 };

@@ -5,6 +5,7 @@ const { getTokensForUsers } = require('./deviceTokens');
 const { sendPushNotifications } = require('./pushSender');
 const { getRootURL } = require('./rootURL');
 const { TIMEZONE } = require('./promos');
+const { describeError } = require('./describeError');
 
 // Used when the hosted branding can't be read.
 const FALLBACK_BRAND = {
@@ -199,7 +200,7 @@ const sendGiftNotifications = async ({ userIds, promo }) => {
         body,
         data: { type: 'promo', promoId: promo.id, link },
       }))
-    ).catch(err => console.error('[promoNotify] push failed:', err));
+    ).catch(err => console.error('[promoNotify] push failed:', describeError(err)));
   }
   return true;
 };

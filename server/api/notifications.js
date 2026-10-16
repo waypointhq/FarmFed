@@ -2,6 +2,7 @@ const { getSdk, getIntegrationSdk, handleError } = require('../api-util/sdk');
 const { addNotification, getNotificationsForUser, markReadForUser } = require('../api-util/notifications');
 const { getTokensForUsers } = require('../api-util/deviceTokens');
 const { sendPushNotifications } = require('../api-util/pushSender');
+const { describeError } = require('../api-util/describeError');
 
 /**
  * GET /api/notifications — fetch unread notifications for the current user
@@ -16,7 +17,11 @@ const getNotificationsHandler = async (req, res) => {
 
     res.status(200).json({ notifications });
   } catch (e) {
-    handleError(res, e);
+    // 401/403 here means the page's session has ended (e.g. an expired
+    // "log in as" session) while the bell keeps polling. Expected, so don't
+    // log a full error every minute.
+    const sessionEnded = e.status === 401 || e.status === 403;
+    handleError(res, e, { skipErrorLogging: sessionEnded });
   }
 };
 
@@ -83,7 +88,7 @@ const notifyFollowersHandler = async (req, res) => {
 
       // Fire and forget — don't block the response on push delivery
       sendPushNotifications(pushMessages).catch(err => {
-        console.error('Failed to send push notifications:', err);
+        console.error('Failed to send push notifications:', describeError(err));
       });
     }
 

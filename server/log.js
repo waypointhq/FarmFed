@@ -4,12 +4,17 @@
  * or just plain printing errors to the log.
  */
 
+const { inspect } = require('util');
 const Sentry = require('@sentry/node');
+const { describeError } = require('./api-util/describeError');
 
 const ENV = process.env.REACT_APP_ENV;
 const SENTRY_DSN = process.env.REACT_APP_SENTRY_DSN;
 const VERBOSE = process.env.VERBOSE === 'true';
 const DEV = process.env.REACT_APP_ENV === 'development';
+
+// Heroku timestamps each line separately, so keep each error on one.
+const ONE_LINE = { depth: 5, breakLength: Infinity, compact: true };
 
 const ingoreErrorsMap = {
   ['AxiosError: Network Error']: true,
@@ -54,8 +59,8 @@ const responseApiErrorInfo = err =>
 
 /**
  * Logs a error. If Sentry client is set up
- * passes the error to that. Otherwise prints
- * the error to `console.error`.
+ * passes the error to that. Always prints a
+ * summary of it (see describeError) to `console.error`.
  *
  * @param {Error} e Error that occurred
  * @param {String} code Error code
@@ -73,10 +78,16 @@ exports.error = (e, code, data) => {
       Sentry.captureException(e);
     });
   }
-  // Let's log always to stdout
-  console.error(e);
-  console.error(code);
-  console.error(data);
+  // Let's log always to stdout: one line per error, plus the stack for
+  // errors from our own code.
+  const described = describeError(e);
+  const { stack, ...summary } =
+    described && typeof described === 'object' ? described : { message: String(described) };
+  const dataMaybe = data === undefined ? {} : { data };
+  console.error(code, inspect({ ...summary, ...dataMaybe }, ONE_LINE));
+  if (stack) {
+    console.error(stack);
+  }
 };
 
 exports.devLogger = (...args) => {

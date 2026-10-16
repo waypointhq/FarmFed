@@ -44,6 +44,7 @@ const { getExtractors } = require('./importer');
 const renderer = require('./renderer');
 const dataLoader = require('./dataLoader');
 const { generateCSPNonce, csp } = require('./csp');
+const { canonicalHostRedirect } = require('./canonicalHost');
 const sdkUtils = require('./api-util/sdk');
 const { getSDKProxy } = require('./api-util/sdkCacheProxy');
 const settingsStore = require('./api-util/settingsStore');
@@ -155,6 +156,9 @@ if (TRUST_PROXY === 'true') {
 } else if (TRUST_PROXY !== null) {
   app.set('trust proxy', TRUST_PROXY);
 }
+
+// Send visitors on the herokuapp.com address to the marketplace domain.
+app.use(canonicalHostRedirect(process.env.REACT_APP_MARKETPLACE_ROOT_URL));
 
 app.use(compression());
 app.use(

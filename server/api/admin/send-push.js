@@ -4,6 +4,7 @@ const { getTokens } = require('../../api-util/deviceTokens');
 const { sendPushNotifications } = require('../../api-util/pushSender');
 const announcements = require('../../api-util/announcements');
 const { isAdminUser } = require('../../api-util/admin');
+const { describeError } = require('../../api-util/describeError');
 
 /**
  * POST /api/admin/send-push
@@ -39,7 +40,7 @@ module.exports = async (req, res) => {
 
     // Fire the push (best-effort — don't fail the request if some tokens error).
     sendPushNotifications(messages).catch(err =>
-      console.error('admin send-push broadcast failed:', err)
+      console.error('admin send-push broadcast failed:', describeError(err))
     );
 
     const announcement = await announcements.add({

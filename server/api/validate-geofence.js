@@ -1,5 +1,6 @@
 const { getGeofence, getVendorPolygon, getConsumerPolygon } = require('../api-util/geofence');
 const { isPointInPolygon } = require('../api-util/pointInPolygon');
+const { describeError } = require('../api-util/describeError');
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 
@@ -57,7 +58,7 @@ const handler = async (req, res) => {
     const valid = isPointInPolygon(coords.lat, coords.lng, polygon.coordinates);
     res.status(200).json({ valid });
   } catch (e) {
-    console.error('Geofence validation error:', e);
+    console.error('Geofence validation error:', describeError(e));
     res.status(500).json({ error: 'Internal server error' });
   }
 };

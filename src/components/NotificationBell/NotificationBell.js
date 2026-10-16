@@ -15,21 +15,26 @@ const NotificationBell = props => {
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const pollRef = useRef(null);
 
   const loadNotifications = useCallback(() => {
     fetchNotifications()
       .then(response => {
         setNotifications(response.notifications || []);
       })
-      .catch(() => {
-        // Silently fail — bell just shows 0
+      .catch(e => {
+        // Silently fail — bell just shows 0. A 401/403 means this page's
+        // session has ended, so stop asking every minute; a reload starts over.
+        if (e?.status === 401 || e?.status === 403) {
+          clearInterval(pollRef.current);
+        }
       });
   }, []);
 
   useEffect(() => {
     loadNotifications();
-    const interval = setInterval(loadNotifications, POLL_INTERVAL);
-    return () => clearInterval(interval);
+    pollRef.current = setInterval(loadNotifications, POLL_INTERVAL);
+    return () => clearInterval(pollRef.current);
   }, [loadNotifications]);
 
   // Register for push notifications when authenticated user mounts this component

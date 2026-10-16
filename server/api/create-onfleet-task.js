@@ -1,5 +1,6 @@
 const { getSdk } = require('../api-util/sdk');
 const { isConfigured, createTask } = require('../api-util/onfleet');
+const { describeError } = require('../api-util/describeError');
 
 /**
  * POST /api/create-onfleet-task
@@ -99,7 +100,7 @@ module.exports = async (req, res) => {
       trackingURL: task.trackingURL || null,
     });
   } catch (e) {
-    console.error('create-onfleet-task error:', e);
+    console.error('create-onfleet-task error:', describeError(e));
     return res.status(500).json({ error: 'Failed to create OnFleet task' });
   }
 };

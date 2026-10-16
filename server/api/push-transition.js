@@ -3,6 +3,7 @@ const { getTokensForUser } = require('../api-util/deviceTokens');
 const { sendPushNotifications } = require('../api-util/pushSender');
 const { reconcileAllOpenDeliveries } = require('../api-util/deliveryReconcile');
 const { reconcileAllRedemptions } = require('../api-util/promos');
+const { describeError } = require('../api-util/describeError');
 
 /**
  * Push notification templates per transition. Each entry decides who gets
@@ -102,11 +103,11 @@ module.exports = async (req, res) => {
     // reconcile cron is the robust backstop for those.) Best-effort, idempotent.
     if (transition === 'transition/decline-order') {
       reconcileAllOpenDeliveries(integrationSdk).catch(err => {
-        console.error('push-transition delivery reconcile failed:', err);
+        console.error('push-transition delivery reconcile failed:', describeError(err));
       });
       // Same for free-delivery promos: a fully declined order gets its promo back.
       reconcileAllRedemptions(integrationSdk).catch(err => {
-        console.error('push-transition promo reconcile failed:', err);
+        console.error('push-transition promo reconcile failed:', describeError(err));
       });
     }
 
@@ -151,7 +152,7 @@ module.exports = async (req, res) => {
     }));
 
     sendPushNotifications(pushMessages).catch(err => {
-      console.error('push-transition send failed:', err);
+      console.error('push-transition send failed:', describeError(err));
     });
 
     res.status(200).json({ pushed: pushMessages.length });

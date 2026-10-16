@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const { getIntegrationSdk } = require('../api-util/sdk');
 const { isConfigured } = require('../api-util/onfleet');
+const { describeError } = require('../api-util/describeError');
 
 /**
  * OnFleet signs every webhook: `x-onfleet-signature` is the hex HMAC-SHA512 of
@@ -130,7 +131,7 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({ ok: true, transactionId });
   } catch (e) {
-    console.error('onfleet-webhook error:', e);
+    console.error('onfleet-webhook error:', describeError(e));
     // Always respond 200 to prevent OnFleet from retrying endlessly
     return res.status(200).json({ ok: false, error: e.message });
   }

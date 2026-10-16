@@ -1,4 +1,5 @@
 const { Expo } = require('expo-server-sdk');
+const { describeError } = require('./describeError');
 
 const expo = new Expo();
 
@@ -40,7 +41,7 @@ const sendPushNotifications = async messages => {
         }
       }
     } catch (error) {
-      console.error('Error sending push notification chunk:', error);
+      console.error('Error sending push notification chunk:', describeError(error));
     }
   }
 };

@@ -45,6 +45,7 @@
       ]
     },
     "plugins": [
+      "./plugins/withPodDeploymentTarget",
       [
         "expo-notifications",
         {

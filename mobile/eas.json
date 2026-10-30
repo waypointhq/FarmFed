@@ -17,7 +17,7 @@
       "channel": "production",
       "autoIncrement": true,
       "ios": {
-        "image": "latest"
+        "image": "sdk-55"
       },
       "android": {
         "image": "latest"
